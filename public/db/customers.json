@@ -1,0 +1,37 @@
+{
+  "customers": [
+    {
+      "id": "1",
+      "name": "Graham Staniforth",
+      "email": "gstaniforth@smartfranchise.ai",
+      "phone": "512.806.7119",
+      "company": "Smart Franchise",
+      "title": "Director of Delivery Operations",
+      "timezone": "CST",
+      "createdAt": "2025-12-15T10:30:00.000Z"
+    },
+    {
+      "id": "2",
+      "name": "John Smith",
+      "email": "john.smith@acmecorp.com",
+      "phone": "415.555.0123",
+      "company": "Acme Corporation",
+      "title": "VP of Operations",
+      "timezone": "PST",
+      "createdAt": "2025-12-10T14:20:00.000Z"
+    },
+    {
+      "id": "3",
+      "name": "Emily Rodriguez",
+      "email": "emily.r@techstart.io",
+      "company": "TechStart",
+      "title": "CTO",
+      "createdAt": "2025-12-08T09:15:00.000Z"
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "lastUpdated": "2025-12-18T00:00:00.000Z",
+    "totalCustomers": 3
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "presets": [
+    {
+      "id": "drivethru",
+      "name": "Drive Thru",
+      "imageUrl": "https://images.unsplash.com/photo-1513615994119-1e7ef4f9ae4d?w=1920&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1513615994119-1e7ef4f9ae4d?w=400&q=80"
+    },
+    {
+      "id": "kitchen",
+      "name": "Kitchen",
+      "imageUrl": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=1920&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400&q=80"
+    },
+    {
+      "id": "restaurant",
+      "name": "Restaurant",
+      "imageUrl": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&q=80"
+    },
+    {
+      "id": "shopping-mall",
+      "name": "Shopping Mall Counter",
+      "imageUrl": "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=1920&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=400&q=80"
+    },
+    {
+      "id": "parking",
+      "name": "Parking Spot",
+      "imageUrl": "https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=1920&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=400&q=80"
+    },
+    {
+      "id": "office",
+      "name": "Office",
+      "imageUrl": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80"
+    },
+    {
+      "id": "construction",
+      "name": "Construction",
+      "imageUrl": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1920&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&q=80"
+    },
+    {
+      "id": "railway",
+      "name": "Railway Station",
+      "imageUrl": "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=1920&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=400&q=80"
+    }
+  ]
+}
