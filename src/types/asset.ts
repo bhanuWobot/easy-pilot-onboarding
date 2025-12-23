@@ -3,6 +3,7 @@ export type AssetCategory = 'contract' | 'diagram' | 'photo' | 'report' | 'other
 export interface Asset {
   id: string;
   pilotId: string;
+  title: string; // Mandatory title for the asset
   fileName: string;
   fileType: string; // MIME type
   fileSize: number;

@@ -32,8 +32,8 @@ export interface AuthResponse {
 // Dummy user for testing
 export const DUMMY_USER: User = {
   id: '1',
-  email: 'tushar@wobot.ai',
-  name: 'Tushar',
+  email: 'john@wobot.ai',
+  name: 'John',
   role: 'admin',
   userType: 'Platform',
   createdAt: new Date().toISOString(),

@@ -1,0 +1,94 @@
+{
+  "assets": [
+    {
+      "id": "asset00001",
+      "pilotId": "pilot00001",
+      "title": "Service Agreement",
+      "fileName": "smart-franchise-service-agreement.pdf",
+      "fileType": "application/pdf",
+      "fileSize": 245760,
+      "fileUrl": "data:application/pdf;base64,JVBERi0xLjQKJeLjz9MKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCA2MTIgNzkyXS9SZXNvdXJjZXM8PC9Gb250PDwvRjEgMSAwIFI+Pj4+L0NvbnRlbnRzIDQgMCBSPj4KZW5kb2JqCjQgMCBvYmoKPDwvTGVuZ3RoIDQ0Pj4Kc3RyZWFtCkJUCi9GMSAxMiBUZgoxMDAgNzAwIFRkCihTZXJ2aWNlIEFncmVlbWVudCkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iago=",
+      "category": "contract",
+      "description": "Master service agreement for video surveillance deployment",
+      "tags": ["legal", "contract", "deployment"],
+      "remarks": "Signed by both parties on Nov 1, 2025",
+      "uploadedBy": "john@wobot.ai",
+      "uploadedAt": "2025-11-01T10:45:00.000Z"
+    },
+    {
+      "id": "asset00002",
+      "pilotId": "pilot00001",
+      "title": "Network Diagram",
+      "fileName": "austin-network-topology.pdf",
+      "fileType": "application/pdf",
+      "fileSize": 186420,
+      "fileUrl": "data:application/pdf;base64,JVBERi0xLjQKJeLjz9MKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCA2MTIgNzkyXS9SZXNvdXJjZXM8PC9Gb250PDwvRjEgMSAwIFI+Pj4+L0NvbnRlbnRzIDQgMCBSPj4KZW5kb2JqCjQgMCBvYmoKPDwvTGVuZ3RoIDQyPj4Kc3RyZWFtCkJUCi9GMSAxMiBUZgoxMDAgNzAwIFRkCihOZXR3b3JrIERpYWdyYW0pIFRqCkVUCmVuZHN0cmVhbQplbmRvYmo=",
+      "category": "diagram",
+      "description": "Complete network topology diagram for both Austin locations",
+      "tags": ["network", "infrastructure", "technical"],
+      "uploadedBy": "john@wobot.ai",
+      "uploadedAt": "2025-11-03T14:20:00.000Z"
+    },
+    {
+      "id": "asset00003",
+      "pilotId": "pilot00002",
+      "title": "Site Survey Photos - Downtown",
+      "fileName": "sf-downtown-survey.zip",
+      "fileType": "application/zip",
+      "fileSize": 5242880,
+      "fileUrl": "data:application/zip;base64,UEsDBBQAAAAIAA==",
+      "category": "photo",
+      "description": "Pre-installation site survey photographs for SF Downtown Store",
+      "tags": ["survey", "photos", "pre-install"],
+      "uploadedBy": "john@wobot.ai",
+      "uploadedAt": "2025-10-18T11:30:00.000Z"
+    },
+    {
+      "id": "asset00004",
+      "pilotId": "pilot00002",
+      "title": "Installation Certificate",
+      "fileName": "acme-installation-certificate.pdf",
+      "fileType": "application/pdf",
+      "fileSize": 128450,
+      "fileUrl": "data:application/pdf;base64,JVBERi0xLjQKJeLjz9MKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCA2MTIgNzkyXS9SZXNvdXJjZXM8PC9Gb250PDwvRjEgMSAwIFI+Pj4+L0NvbnRlbnRzIDQgMCBSPj4KZW5kb2JqCjQgMCBvYmoKPDwvTGVuZ3RoIDUwPj4Kc3RyZWFtCkJUCi9GMSAxMiBUZgoxMDAgNzAwIFRkCihJbnN0YWxsYXRpb24gQ2VydGlmaWNhdGUpIFRqCkVUCmVuZHN0cmVhbQplbmRvYmo=",
+      "category": "contract",
+      "description": "Official installation completion certificate",
+      "tags": ["certificate", "completion", "official"],
+      "uploadedBy": "john@wobot.ai",
+      "uploadedAt": "2025-11-05T16:45:00.000Z"
+    },
+    {
+      "id": "asset00005",
+      "pilotId": "pilot00002",
+      "title": "Monthly Analytics Report - November",
+      "fileName": "acme-analytics-nov-2025.pdf",
+      "fileType": "application/pdf",
+      "fileSize": 342100,
+      "fileUrl": "data:application/pdf;base64,JVBERi0xLjQKJeLjz9MKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCA2MTIgNzkyXS9SZXNvdXJjZXM8PC9Gb250PDwvRjEgMSAwIFI+Pj4+L0NvbnRlbnRzIDQgMCBSPj4KZW5kb2JqCjQgMCBvYmoKPDwvTGVuZ3RoIDQ1Pj4Kc3RyZWFtCkJUCi9GMSAxMiBUZgoxMDAgNzAwIFRkCihBbmFseXRpY3MgUmVwb3J0KSBUagpFVAplbmRzdHJlYW0KZW5kb2JqCg==",
+      "category": "report",
+      "description": "Retail analytics report showing foot traffic and customer behavior insights",
+      "tags": ["analytics", "report", "monthly"],
+      "uploadedBy": "sarah.johnson@wobot.ai",
+      "uploadedAt": "2025-12-01T09:00:00.000Z"
+    },
+    {
+      "id": "asset00006",
+      "pilotId": "pilot00003",
+      "title": "Building Permit Application",
+      "fileName": "techstart-permit-application.pdf",
+      "fileType": "application/pdf",
+      "fileSize": 156780,
+      "fileUrl": "data:application/pdf;base64,JVBERi0xLjQKJeLjz9MKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCA2MTIgNzkyXS9SZXNvdXJjZXM8PC9Gb250PDwvRjEgMSAwIFI+Pj4+L0NvbnRlbnRzIDQgMCBSPj4KZW5kb2JqCjQgMCBvYmoKPDwvTGVuZ3RoIDQ4Pj4Kc3RyZWFtCkJUCi9GMSAxMiBUZgoxMDAgNzAwIFRkCihQZXJtaXQgQXBwbGljYXRpb24pIFRqCkVUCmVuZHN0cmVhbQplbmRvYmo=",
+      "category": "contract",
+      "description": "City of Seattle building permit application for camera installation",
+      "tags": ["permit", "legal", "seattle"],
+      "uploadedBy": "gstaniforth@smartfranchise.ai",
+      "uploadedAt": "2025-12-05T13:15:00.000Z"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-12-23T09:10:00.000Z",
+    "totalAssets": 6
+  }
+}

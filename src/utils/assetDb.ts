@@ -13,53 +13,73 @@ interface AssetDatabase {
 
 const ASSETS_DB_KEY = 'assets_db';
 
+async function loadAssetsDatabase(): Promise<AssetDatabase> {
+  try {
+    const response = await fetch('/db/assets.json');
+    if (!response.ok) {
+      throw new Error('Failed to load assets database');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error loading assets from file:', error);
+    return {
+      assets: [],
+      metadata: {
+        version: '1.0',
+        lastUpdated: new Date().toISOString(),
+        totalAssets: 0,
+      },
+    };
+  }
+}
+
 async function getAssetsDatabase(): Promise<AssetDatabase> {
-  const stored = localStorage.getItem(ASSETS_DB_KEY);
+  const stored = sessionStorage.getItem(ASSETS_DB_KEY);
   if (stored) {
     return JSON.parse(stored);
   }
-  return {
-    assets: [],
-    metadata: {
-      version: '1.0',
-      lastUpdated: new Date().toISOString(),
-      totalAssets: 0,
-    },
-  };
+  const db = await loadAssetsDatabase();
+  saveAssetsDatabase(db);
+  return db;
 }
 
 function saveAssetsDatabase(db: AssetDatabase): void {
   db.metadata.lastUpdated = new Date().toISOString();
   db.metadata.totalAssets = db.assets.length;
-  localStorage.setItem(ASSETS_DB_KEY, JSON.stringify(db));
+  sessionStorage.setItem(ASSETS_DB_KEY, JSON.stringify(db));
 }
 
 export async function createAsset(assetData: Omit<Asset, 'id' | 'uploadedAt'>): Promise<Asset> {
   const db = await getAssetsDatabase();
-  
+
+  // Validate that title is provided
+  if (!assetData.title || assetData.title.trim() === "") {
+    throw new Error("Asset title is required");
+  }
+
   const newAsset: Asset = {
     ...assetData,
     id: nanoid(10),
     uploadedAt: new Date().toISOString(),
   };
-  
+
   db.assets.push(newAsset);
   saveAssetsDatabase(db);
-  
+
   // Create activity log
   await createRemark({
     pilotId: assetData.pilotId,
-    text: `Uploaded ${assetData.category}: "${assetData.fileName}"`,
-    type: 'activity',
+    text: `Uploaded ${assetData.category}: "${assetData.title}" (${assetData.fileName})`,
+    type: "activity",
     isSystem: true,
     relatedTo: {
-      type: 'asset',
+      type: "asset",
       id: newAsset.id,
-      name: assetData.fileName,
+      name: assetData.title,
     },
     createdBy: assetData.uploadedBy,
   });
-  
+
   return newAsset;
 }
 

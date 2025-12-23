@@ -13,7 +13,7 @@ This platform provides a complete onboarding solution where:
 ## ✨ Features
 
 ### Authentication & Dashboard
-- **Login Page**: Secure authentication with dummy credentials (tushar@wobot.ai / password123)
+- **Login Page**: Secure authentication with dummy credentials (john@wobot.ai / password123)
 - **Session Persistence**: Auth state stored in localStorage, survives page refreshes
 - **Protected Routes**: Secure pages requiring authentication
 - **Route Preservation**: Redirects to intended page after login
@@ -21,14 +21,79 @@ This platform provides a complete onboarding solution where:
 ### Dashboard Features
 - **Personalized Greeting**: Welcome message with user's name, profile avatar, and user type (Platform/Partner)
 - **Collapsible Sidebar**: Icon-only navigation with hover tooltips
-  - Home, Pilots, Alerts, Users, Customers, Assets, Settings, Logout
-- **Pilot Management**: 
-  - View recent pilots with progress tracking
-  - Clickable pilot cards with hover effects
-  - Status badges (Active, In Progress, Issues, Completed)
+  - Home, Pilots, Alerts, Users, Customers, Logout
+  - (Assets and Settings temporarily hidden)
+- **Pilot Overview**: 
+  - View recent 4 pilots assigned to the user (admin sees all)
+  - Clickable pilot cards navigating to pilot details
+  - Status badges (Draft, Active, In Progress, Issues, Completed, On Hold)
   - Progress bars with color-coded visualization
-- **Stats Overview**: Quick metrics showing total, active, in-progress, and completed pilots
+  - Delete functionality with confirmation modal
+- **Stats Overview**: Quick metrics showing total, active, draft, and completed pilots
 - **New Pilot Button**: Quick access to create new onboarding experiences
+
+### Pilot Management System
+- **Pilot List Page**: Comprehensive view of all pilots with advanced features
+  - Search by pilot name
+  - Filter by status using interactive stat cards (All, Active, Draft, Completed)
+  - Filter by assigned users (admin sees all, users see assigned)
+  - Grid layout with detailed pilot cards
+  - Delete functionality with confirmation
+  - Real-time stats calculation
+- **Pilot Details Page**: Full pilot information hub with tabbed interface
+  - **Overview Tab**: 
+    - Pilot metadata (customer, created date, assigned users)
+    - Progress tracking with objectives summary
+    - Cameras summary with status breakdown
+    - Assets summary with category breakdown
+    - Delete pilot functionality
+  - **Cameras Tab**: 
+    - Create new cameras with drag-and-drop frame upload
+    - Upload multiple frames per camera
+    - Set primary frame for each camera (visual badge)
+    - Edit camera names and comments inline
+    - Update camera status (Pending, Installed, Active, Inactive, Issue)
+    - Delete individual cameras with confirmation
+    - Preview camera frames in grid layout
+  - **Assets Tab**: 
+    - Upload assets with drag-and-drop or click
+    - Categorize assets (Document, Image, Video, Contract, Report, Other)
+    - Visual preview for all asset types
+    - Download assets with automatic activity logging
+    - Delete assets with confirmation and activity logging
+    - Grid layout with category badges
+  - **Objectives Tab**: 
+    - Create and track objectives with descriptions
+    - Status tracking (Not Started, In Progress, Completed, Blocked)
+    - Priority levels (Low, Medium, High, Critical)
+    - Due date management
+    - Assigned user selection
+    - Progress indicators
+  - **Objective Details Page**: Comprehensive objective configuration
+    - Use Case section for objective description and business context
+    - Success Criteria section with target percentage and description
+      - Edit mode: Grid layout with percentage input (1-100%) and description field
+      - Display mode: Circular SVG progress indicator with green gradient
+      - Activity tracking for all success criteria updates
+    - ROI Configuration section with interactive canvas
+      - Step 1: Location selection with multi-select dropdown
+      - Step 2: Camera and ROI drawing on uploaded frame
+        - Upload frame with drag-and-drop
+        - Draw multiple ROIs (Region of Interest) with click-to-draw
+        - Edit ROI names with inline editing
+        - Delete individual ROIs
+        - Clear all ROIs with confirmation
+        - ROI profile templates (Person, Vehicle, Zone Violation, etc.)
+      - Save configuration with validation
+  - **Activity Tab**: 
+    - Chronological activity feed
+    - User names displayed (not just emails)
+    - Activity types (objective created, asset uploaded, asset deleted, success criteria updated, etc.)
+    - Timestamp with relative time display
+- **Pilot Creation**: Multi-step wizard with customer selection and configuration
+- **Pilot Deletion**: Cascade delete with confirmation (removes all related cameras, assets, objectives, remarks)
+- **Status Management**: Support for draft, active, in-progress, completed, on-hold, issues
+- **Database Storage**: Persistent storage with localStorage-based JSON database
 
 ### User Management System
 - **User List Page**: Browse all platform and partner users with advanced filtering
@@ -95,8 +160,9 @@ This platform provides a complete onboarding solution where:
 - **React Router DOM 7.1.1** - Client-side routing
 - **Framer Motion 12.0.3** - Smooth animations and transitions
 - **React Hot Toast 2.4.1** - Toast notifications
-- **Nanoid 5.0.9** - Unique ID generation
+- **Nanoid 5.0.9** - Unique ID generation (10-character IDs)
 - **Clsx 2.1.1** - Conditional className utility
+- **React Dropzone 14.3.5** - Drag-and-drop file upload
 
 ## 📁 Project Structure
 
@@ -107,8 +173,13 @@ src/
 │   │   └── ProtectedRoute.tsx          # Route guard for authenticated pages
 │   ├── builder/
 │   │   └── ConfigForm.tsx              # Form with toggles & fields
+│   ├── camera/
+│   │   ├── CameraCountSelector.tsx     # Camera count selection component
+│   │   ├── ChoiceCard.tsx              # Choice card for camera count
+│   │   ├── FrameUploader.tsx           # Frame upload component
+│   │   └── LocationInput.tsx           # Location input component
 │   ├── dashboard/
-│   │   └── PilotCard.tsx               # Pilot card with status & progress
+│   │   └── PilotCard.tsx               # Pilot card with status, progress & delete
 │   ├── layout/
 │   │   ├── DashboardLayout.tsx         # Main dashboard wrapper
 │   │   ├── Header.tsx                  # Dashboard header with greeting
@@ -117,32 +188,45 @@ src/
 │   │   ├── BrowserFrame.tsx            # Browser chrome UI
 │   │   └── WelcomePagePreview.tsx      # Live customer view preview
 │   └── shared/
-│       ├── Button.tsx                  # Reusable button with variants (danger variant added)
-│       ├── Input.tsx                   # Styled input component (icon support added)
-│       └── Toggle.tsx                  # iOS-style toggle switch
+│       ├── Button.tsx                  # Reusable button with variants (danger variant)
+│       ├── Input.tsx                   # Styled input component (with icon support)
+│       ├── Toggle.tsx                  # iOS-style toggle switch
+│       ├── FileUploadZone.tsx          # Drag-drop file upload component
+│       └── ImagePreview.tsx            # Image preview with primary frame selection
 ├── contexts/
 │   ├── AuthContext.tsx                 # Authentication state management
 │   └── OnboardingBuilderContext.tsx    # Onboarding config state
 ├── pages/
 │   ├── LoginPage.tsx                   # Authentication page
-│   ├── DashboardPage.tsx               # Main dashboard with pilots
-│   ├── PilotDetailsPage.tsx            # Pilot detail view (placeholder)
+│   ├── DashboardPage.tsx               # Main dashboard with recent pilots
+│   ├── PilotsPage.tsx                  # Comprehensive pilots list with search & filter
+│   ├── PilotDetailsPage.tsx            # Pilot detail view with cameras/assets/objectives/activity tabs
+│   ├── CreatePilotPage.tsx             # Create new pilot wizard
 │   ├── LinkGeneratorPage.tsx           # User onboarding builder
 │   ├── CustomerWelcomePage.tsx         # Public customer welcome page
 │   ├── CameraDetailsPage.tsx           # Camera configuration page
-│   └── SetupPage.tsx                   # Setup completion page
+│   ├── SetupPage.tsx                   # Setup completion page
+│   ├── UsersPage.tsx                   # User list page
+│   ├── UserDetailsPage.tsx             # User detail view
+│   ├── UserFormPage.tsx                # User create/edit form
+│   ├── CustomersPage.tsx               # Customer list page
+│   ├── CustomerDetailsPage.tsx         # Customer detail view
+│   └── CustomerFormPage.tsx            # Customer create/edit form
 ├── routes/
 │   └── index.tsx                       # React Router configuration
 ├── types/
 │   ├── auth.ts                         # Authentication types
-│   ├── pilot.ts                        # Pilot types & mock data
-│   ├── camera.ts                       # Camera configuration types
-│   └── onboarding.ts                   # Onboarding config types
+│   ├── pilot.ts                        # Pilot types with status helpers
+│   ├── camera.ts                       # Camera & frame types
+│   ├── customer.ts                     # Customer types
+│   └── onboarding.ts                   # Onboarding config & pilot record types
 ├── utils/
 │   ├── auth.ts                         # Auth helpers & validation
 │   ├── db.ts                           # Pilot database CRUD operations
 │   ├── userDb.ts                       # User database CRUD operations
 │   ├── customerDb.ts                   # Customer database CRUD operations
+│   ├── cameraDb.ts                     # Camera database CRUD operations
+│   ├── assetDb.ts                      # Asset database CRUD operations
 │   └── linkGenerator.ts                # Clipboard helper utilities
 ├── index.css                           # Tailwind imports & custom styles
 └── App.tsx                             # Root component with providers
@@ -191,7 +275,9 @@ Footer:   delay: 1.0s
 
 ## 📋 Type Definitions
 
-### OnboardingConfig
+### Core Types
+
+#### OnboardingConfig
 ```typescript
 {
   pilotName: string;              // Required, always visible
@@ -209,43 +295,313 @@ Footer:   delay: 1.0s
 }
 ```
 
-### Key Design Decisions
-- `pilotName`: Always required and visible (core identity)
-- `customerBusinessDetails`: Always visible, used for AI image generation only (NOT shown in preview)
-- `brandColor`: Defaults to #3b82f6 if toggled off
-- `backgroundImage`: Falls back to gradient if toggled off or fails to load
-- All toggles default to `true` (show all fields initially)
+#### PilotRecord
+```typescript
+{
+  id: string;                        // Unique 10-character ID
+  pilotName: string;                 // Pilot name
+  customerName: string;              // Customer associated
+  status: 'draft' | 'active' | 'in-progress' | 'completed' | 'on-hold' | 'issues';
+  progress: number;                  // 0-100 percentage
+  createdBy: string;                 // Email of creator
+  createdAt: string;                 // ISO timestamp
+  lastModified: string;              // ISO timestamp
+  assignedUserIds: string[];         // Array of user IDs
+  assignedUsers?: string[];          // Array of user emails (backward compatibility)
+  config: OnboardingConfig;          // Full onboarding configuration
+}
+```
 
-### User & Customer Types
+#### Camera
+```typescript
+{
+  id: string;                        // Unique 10-character ID
+  pilotId: string;                   // Associated pilot ID
+  name: string;                      // Camera name (e.g., "Camera 1")
+  status: 'pending' | 'installed' | 'active' | 'inactive' | 'issue';
+  frames: StoredCameraFrame[];       // Array of uploaded frames
+  primaryFrameId?: string;           // ID of primary frame
+  comments?: string;                 // Optional notes/description
+  createdAt: string;                 // ISO timestamp
+  createdBy: string;                 // Email of creator
+}
+```
+
+#### StoredCameraFrame
+```typescript
+{
+  id: string;                        // Unique 10-character ID
+  data: string;                      // Base64-encoded image data
+  fileName: string;                  // Original file name
+  fileType: string;                  // MIME type (e.g., "image/jpeg")
+  uploadedAt: string;                // ISO timestamp
+}
+```
+
+#### Asset
+```typescript
+{
+  id: string;                        // Unique 10-character ID
+  pilotId: string;                   // Associated pilot ID
+  category: 'document' | 'image' | 'video' | 'contract' | 'report' | 'other';
+  fileName: string;                  // File name
+  fileType: string;                  // MIME type
+  fileSize: number;                  // Size in bytes
+  data: string;                      // Base64-encoded file data
+  uploadedBy: string;                // Email of uploader
+  uploadedAt: string;                // ISO timestamp
+}
+```
+
+#### SuccessCriteria
+```typescript
+{
+  targetPercentage: number;          // Target success percentage (0-100)
+  description: string;               // Description of success criteria
+}
+```
+
+#### Objective
+```typescript
+{
+  id: string;                        // Unique 10-character ID
+  pilotId: string;                   // Associated pilot ID
+  title: string;                     // Objective title
+  description: string;               // Detailed description
+  status: 'not-started' | 'in-progress' | 'completed' | 'blocked';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  assignedTo?: string;               // User ID of assignee
+  dueDate?: string;                  // ISO date string
+  successCriteria?: SuccessCriteria; // Optional success criteria
+  useCase?: string;                  // Business use case description
+  locations?: string[];              // Array of location names
+  createdBy: string;                 // Email of creator
+  createdAt: string;                 // ISO timestamp
+}
+```
+
+#### Remark (Activity)
+```typescript
+{
+  id: string;                        // Unique 10-character ID
+  pilotId: string;                   // Associated pilot ID
+  type: 'objective-created' | 'objective-updated' | 'asset-uploaded' | 'asset-deleted' | 'camera-added' | 'camera-updated' | 'general';
+  content: string;                   // Activity description
+  createdBy: string;                 // Email of creator
+  createdAt: string;                 // ISO timestamp
+  metadata?: Record<string, any>;    // Additional context data
+}
+```
 
 #### User
 ```typescript
 {
-  id: string;              // Unique identifier
-  email: string;           // Required - Email address
-  name: string;            // Required - Full name
-  role: 'admin' | 'user';  // System role for permissions
+  id: string;                        // Unique identifier
+  email: string;                     // Required - Email address
+  name: string;                      // Required - Full name
+  role: 'admin' | 'user';            // System role for permissions
   userType: 'Platform' | 'Partner';  // Business relationship type
-  avatar?: string;         // Optional - Avatar URL
-  createdAt: string;       // ISO timestamp
+  avatar?: string;                   // Optional - Avatar URL
+  createdAt: string;                 // ISO timestamp
 }
 ```
 
 #### Customer
 ```typescript
 {
-  id: string;              // Unique identifier
-  name: string;            // Required - Full name
-  email: string;           // Required - Email address
-  phone?: string;          // Optional - Phone number
-  company?: string;        // Optional - Company name
-  title?: string;          // Optional - Job title
-  timezone?: string;       // Optional - Timezone (e.g., CST, PST)
-  createdAt: string;       // ISO timestamp
+  id: string;                        // Unique identifier
+  name: string;                      // Required - Full name
+  email: string;                     // Required - Email address
+  phone?: string;                    // Optional - Phone number
+  company?: string;                  // Optional - Company name
+  title?: string;                    // Optional - Job title
+  timezone?: string;                 // Optional - Timezone (e.g., CST, PST)
+  createdAt: string;                 // ISO timestamp
 }
 ```
 
-## 🚀 Getting Started
+### Type Helper Functions
+
+#### Pilot Status Helpers
+```typescript
+// Get badge color for status
+getStatusBadgeStyle(status: PilotStatus): string
+
+// Get display text for status
+getStatusDisplayText(status: PilotStatus): string
+```
+
+## � Database Structure
+
+The application uses **localStorage** for client-side data persistence. All data is stored as JSON with the following structure:
+
+### Storage Keys
+
+- `pilots_db` - Pilot records
+- `cameras_db` - Camera records with frames
+- `assets_db` - Uploaded asset files
+- `objectives_db` - Pilot objectives
+- `remarks_db` - Activity feed entries
+- `users_db` - User accounts
+- `customers_db` - Customer records
+- `onboarding-builder-config` - Current onboarding config (session state)
+- `auth-user` - Current authenticated user
+- `auth-token` - Authentication token
+
+### Database Schemas
+
+#### pilots_db
+```json
+[
+  {
+    "id": "abc123xyz0",
+    "pilotName": "Acme Corp Setup",
+    "customerName": "john@acme.com",
+    "status": "active",
+    "progress": 45,
+    "createdBy": "tushar@wobot.ai",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "lastModified": "2024-01-15T14:20:00Z",
+    "assignedUserIds": ["user123"],
+    "config": { /* OnboardingConfig */ }
+  }
+]
+```
+
+#### cameras_db
+```json
+[
+  {
+    "id": "cam123xyz0",
+    "pilotId": "abc123xyz0",
+    "name": "Camera 1",
+    "status": "installed",
+    "comments": "Main entrance camera",
+    "primaryFrameId": "frame12345",
+    "frames": [
+      {
+        "id": "frame12345",
+        "data": "data:image/jpeg;base64,...",
+        "fileName": "entrance.jpg",
+        "fileType": "image/jpeg",
+        "uploadedAt": "2024-01-15T11:00:00Z"
+      }
+    ],
+    "createdAt": "2024-01-15T10:45:00Z",
+    "createdBy": "tushar@wobot.ai"
+  }
+]
+```
+
+#### assets_db
+```json
+[
+  {
+    "id": "asset12345",
+    "pilotId": "abc123xyz0",
+    "category": "contract",
+    "fileName": "service-agreement.pdf",
+    "fileType": "application/pdf",
+    "fileSize": 245760,
+    "data": "data:application/pdf;base64,...",
+    "uploadedBy": "tushar@wobot.ai",
+    "uploadedAt": "2024-01-15T12:00:00Z"
+  }
+]
+```
+
+#### objectives_db
+```json
+[
+  {
+    "id": "obj123xyz0",
+    "pilotId": "abc123xyz0",
+    "title": "Complete camera installation",
+    "description": "Install all 5 cameras at designated locations",
+    "status": "in-progress",
+    "priority": "high",
+    "assignedTo": "user123",
+    "dueDate": "2024-01-20",
+    "successCriteria": {
+      "targetPercentage": 95,
+      "description": "Accuracy in camera detection and zone monitoring"
+    },
+    "useCase": "Monitor customer wait times and queue management at checkout counters",
+    "locations": ["Main Entrance", "Checkout Area", "Parking Lot"],
+    "createdBy": "tushar@wobot.ai",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+]
+```
+
+#### remarks_db
+```json
+[
+  {
+    "id": "rem123xyz0",
+    "pilotId": "abc123xyz0",
+    "type": "asset-uploaded",
+    "content": "Uploaded contract: service-agreement.pdf",
+    "createdBy": "tushar@wobot.ai",
+    "createdAt": "2024-01-15T12:00:00Z",
+    "metadata": { "assetId": "asset12345" }
+  }
+]
+```
+
+#### users_db
+```json
+[
+  {
+    "id": "user123",
+    "email": "john@wobot.ai",
+    "name": "John",
+    "role": "admin",
+    "userType": "Platform",
+    "avatar": "https://...",
+    "createdAt": "2024-01-01T00:00:00Z"
+  }
+]
+```
+
+#### customers_db
+```json
+[
+  {
+    "id": "cust123",
+    "name": "John Doe",
+    "email": "john@acme.com",
+    "phone": "+1-555-0100",
+    "company": "Acme Corp",
+    "title": "CTO",
+    "timezone": "PST",
+    "createdAt": "2024-01-10T00:00:00Z"
+  }
+]
+```
+
+### Data Relationships
+
+```
+Pilot (1) ──> (N) Cameras
+Pilot (1) ──> (N) Assets
+Pilot (1) ──> (N) Objectives
+Pilot (1) ──> (N) Remarks (Activity)
+Pilot (N) ──> (1) Customer (by email)
+Pilot (N) ──> (N) Users (by assignedUserIds)
+Camera (1) ──> (N) StoredCameraFrames (embedded)
+```
+
+### Database Operations
+
+All database utilities follow consistent patterns:
+
+- **Create**: Generate unique ID with `nanoid(10)`, add timestamp, return new record
+- **Read**: Filter by ID or pilotId, return single record or array
+- **Update**: Merge updates with existing record, update lastModified
+- **Delete**: Remove by ID, cascade delete related records for pilots
+
+## �🚀 Getting Started
 
 ### Prerequisites
 
@@ -276,7 +632,7 @@ Server runs at: **http://localhost:5173**
 
 1. **Login**:
    - Navigate to http://localhost:5173/ (auto-redirects to /login)
-   - Use credentials: `tushar@wobot.ai` / `password123`
+   - Use credentials: `john@wobot.ai` / `password123`
    - Session persists in localStorage
 
 2. **Dashboard**:
@@ -351,44 +707,123 @@ const OnboardingBuilderContext = {
 // Auto-saves to localStorage on every change
 ```
 
-### Database Storage Strategy
+### Database Utilities
 
+#### Pilot Database (db.ts)
 ```typescript
-// JSON-based database with localStorage simulation
-// Database schema in public/db/pilots.json
-{
-  "pilots": PilotRecord[],
-  "metadata": {
-    "version": "1.0",
-    "lastUpdated": string,
-    "totalPilots": number
-  }
-}
-
-// PilotRecord extends OnboardingConfig
-interface PilotRecord extends OnboardingConfig {
-  id: string;              // nanoid(10)
-  createdAt: string;       // ISO timestamp
-  updatedAt: string;       // ISO timestamp
-  createdBy: string;       // User email
-  status: 'active' | 'in-progress' | 'issues' | 'completed';
-}
-
-// CRUD Operations
-createPilot(config, userEmail) => PilotRecord
-getPilotById(id) => PilotRecord | null
-getAllPilots() => PilotRecord[]
-updatePilot(id, updates) => PilotRecord | null
-deletePilot(id) => boolean
-getPilotsByUser(userEmail) => PilotRecord[]
-generatePilotLink(id) => string  // "/welcome/{id}"
+// CRUD operations for pilots
+createPilot(config: OnboardingConfig, userEmail: string): Promise<PilotRecord>
+getPilotById(id: string): Promise<PilotRecord | null>
+getAllPilots(): Promise<PilotRecord[]>
+updatePilot(id: string, updates: Partial<PilotRecord>): Promise<void>
+deletePilot(id: string): Promise<void>  // Cascade deletes cameras, assets, objectives, remarks
+getPilotsByUser(userEmail: string): Promise<PilotRecord[]>
+generatePilotLink(id: string): string
 ```
 
-**Storage Mechanism**:
-- Initial data loaded from `/db/pilots.json`
-- All operations persist to `localStorage` (simulating backend)
-- Uses nanoid for unique ID generation (10 chars)
-- Tracks creator via user email for access control
+#### Camera Database (cameraDb.ts)
+```typescript
+// CRUD operations for cameras
+createCamera(pilotId: string, name: string, userEmail: string): Promise<Camera>
+getCamerasByPilot(pilotId: string): Promise<Camera[]>
+getCameraById(cameraId: string): Promise<Camera | null>
+updateCamera(cameraId: string, updates: Partial<Camera>): Promise<void>
+deleteCamera(cameraId: string): Promise<void>
+
+// Frame management
+addFrameToCamera(cameraId: string, frame: File): Promise<StoredCameraFrame>
+removeFrameFromCamera(cameraId: string, frameId: string): Promise<void>
+setPrimaryFrame(cameraId: string, frameId: string): Promise<void>
+```
+
+#### Asset Database (assetDb.ts)
+```typescript
+// CRUD operations for assets with activity logging
+createAsset(
+  pilotId: string,
+  file: File,
+  category: AssetCategory,
+  userEmail: string
+): Promise<Asset>
+getAssetsByPilot(pilotId: string): Promise<Asset[]>
+getAssetById(assetId: string): Promise<Asset | null>
+updateAsset(assetId: string, updates: Partial<Asset>): Promise<void>
+deleteAsset(assetId: string, userEmail: string): Promise<void>  // Logs activity
+downloadAsset(assetId: string, userEmail: string): Promise<void>  // Logs activity
+```
+
+#### Objective Database (objectiveDb.ts)
+```typescript
+// CRUD operations for objectives
+createObjective(pilotId: string, data: CreateObjectiveData, userEmail: string): Promise<Objective>
+getObjectivesByPilot(pilotId: string): Promise<Objective[]>
+getObjectiveById(objectiveId: string): Promise<Objective | null>
+updateObjective(objectiveId: string, updates: Partial<Objective>): Promise<void>
+deleteObjective(objectiveId: string): Promise<void>
+```
+
+#### Remarks Database (remarkDb.ts)
+```typescript
+// Activity feed operations
+createRemark(
+  pilotId: string,
+  type: RemarkType,
+  content: string,
+  userEmail: string,
+  metadata?: Record<string, any>
+): Promise<Remark>
+getRemarksByPilot(pilotId: string): Promise<Remark[]>
+deleteRemarksByPilot(pilotId: string): Promise<void>
+```
+
+#### User Database (userDb.ts)
+```typescript
+// CRUD operations for users
+createUser(userData: Omit<User, 'id' | 'createdAt'>): Promise<User>
+getUserByEmail(email: string): Promise<User | null>
+getUserById(id: string): Promise<User | null>
+getAllUsers(): Promise<User[]>
+updateUser(id: string, updates: Partial<User>): Promise<void>
+deleteUser(id: string): Promise<void>
+```
+
+#### Customer Database (customerDb.ts)
+```typescript
+// CRUD operations for customers
+createCustomer(customerData: Omit<Customer, 'id' | 'createdAt'>): Promise<Customer>
+getCustomerByEmail(email: string): Promise<Customer | null>
+getCustomerById(id: string): Promise<Customer | null>
+getAllCustomers(): Promise<Customer[]>
+updateCustomer(id: string, updates: Partial<Customer>): Promise<void>
+deleteCustomer(id: string): Promise<void>
+```
+
+### File Upload & Preview Components
+
+#### FileUploadZone.tsx
+```typescript
+// Drag-and-drop file upload component using react-dropzone
+<FileUploadZone
+  accept={{ 'image/*': ['.png', '.jpg', '.jpeg'] }}  // File type restrictions
+  multiple={true}                                     // Allow multiple files
+  maxSize={10 * 1024 * 1024}                         // Max 10MB per file
+  onFilesSelected={(files: File[]) => void}          // Callback with selected files
+>
+  {/* Optional: Custom content inside drop zone */}
+</FileUploadZone>
+```
+
+#### ImagePreview.tsx
+```typescript
+// Image preview with primary frame selection
+<ImagePreview
+  src="data:image/jpeg;base64,..."       // Image source (URL or base64)
+  fileName="camera-frame.jpg"             // Display file name
+  isPrimary={false}                       // Show primary badge
+  onSetPrimary={() => void}               // Set as primary callback
+  onRemove={() => void}                   // Remove image callback
+/>
+```
 
 ### Tailwind CSS v4 Configuration
 
@@ -496,18 +931,80 @@ const themeColor = (fieldToggles.brandColor && brandColor) || '#3b82f6';
 
 ### Core Pages
 
+## 🎯 File Responsibilities
+
+### Core Pages
+
+**DashboardPage.tsx**
+- Main dashboard showing recent 4 pilots (admin sees all, users see assigned)
+- Stats cards with filtering (Total, Active, Draft, Completed)
+- Pilot cards with progress bars and delete functionality
+- "New Pilot" button for quick pilot creation
+- Route: `/dashboard`
+
+**PilotsPage.tsx**
+- Comprehensive pilots list with search and filtering
+- Interactive stats cards for status filtering (All, Active, Draft, Completed)
+- Search by pilot name with real-time filtering
+- Grid layout with detailed pilot cards
+- Delete functionality with confirmation modal
+- Route: `/pilots`
+
+**PilotDetailsPage.tsx**
+- Tabbed interface: Overview, Cameras, Assets, Objectives, Activity
+- **Overview Tab**: Pilot metadata, progress, cameras/assets summaries, delete pilot
+- **Cameras Tab**: CRUD for cameras, frame upload, primary frame selection, status management
+- **Assets Tab**: Asset upload with categories, preview, download, delete
+- **Objectives Tab**: Objective list with cards showing success criteria badges, priority, and status
+- **Activity Tab**: Chronological feed with user names and activity types
+- Route: `/pilots/:id`
+
+**ObjectiveDetailsPage.tsx**
+- Comprehensive objective configuration page with three main sections
+- **Use Case Section**: Describe the business objective and context
+- **Success Criteria Section**: Define measurable success with percentage target
+  - Edit mode: Number input (1-100%) + description text field
+  - Display mode: Circular progress indicator + gradient card
+  - Auto-saves and triggers activity logging
+- **ROI Configuration Section**: Technical setup with 2 steps
+  - Step 1: Location Selection - Multi-select dropdown for camera locations
+  - Step 2: Camera & ROI Drawing - Interactive canvas for drawing regions of interest
+    - Frame upload with drag-and-drop
+    - Click-to-draw ROI rectangles
+    - Inline ROI name editing
+    - ROI profile modal with templates (Person, Vehicle, Zone, etc.)
+    - Delete individual ROIs or clear all
+- Smooth animations with Framer Motion (staggered section appearance)
+- Route: `/objectives/:id`
+
+**CreatePilotPage.tsx**
+- Multi-step wizard for creating new pilots
+- Customer selection and pilot configuration
+- Route: `/pilots/new`
+
 **LinkGeneratorPage.tsx**
 - Split-screen layout (60% form, 40% preview)
 - Shows shareable link with copy button
 - Renders ConfigForm and WelcomePagePreview
-- Route: `/`
+- Route: `/onboard/new`
 
 **CustomerWelcomePage.tsx**
 - Full-screen immersive welcome experience
-- Parses config from URL hash
+- Parses config from URL hash or loads from database by ID
 - Loading state with spinner
 - Error state for invalid/expired links
-- Route: `/welcome#config`
+- Route: `/welcome/:id` or `/welcome#config`
+
+**UsersPage.tsx**
+- User list with search and role filtering
+- Admin-only access
+- Create, edit, delete users
+- Route: `/users`
+
+**CustomersPage.tsx**
+- Customer list with search functionality
+- Create, edit, delete customers
+- Route: `/customers`
 
 ### Components
 
@@ -528,7 +1025,68 @@ const themeColor = (fieldToggles.brandColor && brandColor) || '#3b82f6';
 - URL bar, control buttons (non-functional)
 - Wraps preview content
 
+**PilotCard.tsx**
+- Clickable card showing pilot summary
+- Status badge with color coding
+- Progress bar visualization
+- Delete button with confirmation
+- Supports both Pilot and PilotRecord types
+- Accepts onDelete callback for parent refresh
+
 ### Shared Components
+
+**FileUploadZone.tsx**
+- Drag-and-drop file upload using react-dropzone
+- Customizable file type restrictions
+- File size validation
+- Multiple file support
+- Visual feedback for drag state
+
+**ImagePreview.tsx**
+- Image preview with primary frame badge
+- Hover actions: Set as Primary, Remove
+- Displays file name
+- Responsive grid layout
+
+### Objective Components
+
+**ROICanvas.tsx**
+- Interactive HTML5 canvas for drawing regions of interest (ROI)
+- Click-to-draw rectangle creation with visual feedback
+- ROI manipulation: Move, resize (future), delete
+- Inline name editing for each ROI
+- Canvas scales to fit uploaded frame while maintaining aspect ratio
+- Hover states and selection highlighting
+
+**ROIProfileModal.tsx**
+- Modal for selecting ROI profile templates
+- Pre-defined profiles: Person, Vehicle, Zone Violation, Crowd, Object, Face, License Plate
+- Each profile has icon, description, and typical use cases
+- Applies selected profile to current objective
+
+**ROIProfileChips.tsx**
+- Compact chip display of selected ROI profiles
+- Shows profile icon and name
+- Remove profile functionality
+- Animated appearance with Framer Motion
+
+**ROIToolbar.tsx**
+- Action toolbar for ROI canvas
+- Buttons: Add ROI, Select ROI Profile, Clear All ROIs
+- Confirmation dialog for destructive actions
+- Consistent styling with primary/secondary button variants
+
+**LocationInput.tsx**
+- Multi-select dropdown for location selection
+- Add new locations on-the-fly
+- Remove selected locations with click
+- Animated chips for selected items
+
+**FrameUploader.tsx**
+- Frame upload component with drag-and-drop
+- Image preview with replace functionality
+- Remove uploaded frame action
+- Base64 encoding for storage
 
 **Input.tsx**
 ```tsx
@@ -566,17 +1124,50 @@ const themeColor = (fieldToggles.brandColor && brandColor) || '#3b82f6';
 ### Utilities
 
 **db.ts** (Pilot Database)
-- `createPilot(config, userEmail)`: Creates new pilot record with unique ID
+- `createPilot(config, userEmail)`: Creates new pilot record with unique ID and metadata
 - `getPilotById(id)`: Retrieves pilot by ID from database
 - `getAllPilots()`: Gets all pilots from database
-- `updatePilot(id, updates)`: Updates existing pilot record
-- `deletePilot(id)`: Removes pilot from database
-- `getPilotsByUser(userEmail)`: Filters pilots by creator
+- `updatePilot(id, updates)`: Updates existing pilot record with lastModified timestamp
+- `deletePilot(id)`: Removes pilot and cascade deletes all related cameras, assets, objectives, remarks
+- `getPilotsByUser(userEmail)`: Filters pilots by creator email
 - `generatePilotLink(id)`: Creates shareable URL `/welcome/{id}`
+
+**cameraDb.ts** (Camera Database)
+- `createCamera(pilotId, name, userEmail)`: Creates new camera with unique ID
+- `getCamerasByPilot(pilotId)`: Gets all cameras for a specific pilot
+- `getCameraById(cameraId)`: Retrieves single camera by ID
+- `updateCamera(cameraId, updates)`: Updates camera properties (name, status, comments)
+- `deleteCamera(cameraId)`: Removes camera from database
+- `addFrameToCamera(cameraId, frame)`: Uploads and stores frame as base64
+- `removeFrameFromCamera(cameraId, frameId)`: Deletes specific frame
+- `setPrimaryFrame(cameraId, frameId)`: Sets primary frame for camera
+
+**assetDb.ts** (Asset Database)
+- `createAsset(pilotId, file, category, userEmail)`: Uploads asset with base64 encoding and activity logging
+- `getAssetsByPilot(pilotId)`: Gets all assets for a specific pilot
+- `getAssetById(assetId)`: Retrieves single asset by ID
+- `updateAsset(assetId, updates)`: Updates asset properties
+- `deleteAsset(assetId, userEmail)`: Removes asset and logs deletion activity
+- `downloadAsset(assetId, userEmail)`: Triggers browser download and logs activity
+
+**objectiveDb.ts** (Objective Database)
+- `createObjective(pilotId, data, userEmail)`: Creates new objective with status tracking
+- `getObjectivesByPilot(pilotId)`: Gets all objectives for a specific pilot
+- `getObjectiveById(objectiveId)`: Retrieves single objective by ID
+- `updateObjective(objectiveId, updates)`: Updates objective properties with activity tracking for success criteria changes
+- `deleteObjective(objectiveId)`: Removes objective from database
+
+**Success Criteria Activity Tracking**: When success criteria is updated, an automatic activity log is created with format: "Updated success criteria for [objective] to [percentage]% - [description]"
+
+**remarkDb.ts** (Activity/Remarks Database)
+- `createRemark(pilotId, type, content, userEmail, metadata)`: Logs activity with metadata
+- `getRemarksByPilot(pilotId)`: Gets chronological activity feed for pilot
+- `deleteRemarksByPilot(pilotId)`: Removes all remarks for a pilot (cascade delete)
 
 **userDb.ts** (User Database)
 - `createUser(userData)`: Creates new user with unique ID and timestamp
 - `getUserByEmail(email)`: Retrieves user by email address
+- `getUserById(id)`: Retrieves user by unique ID
 - `getAllUsers()`: Gets all users from database
 - `updateUser(id, updates)`: Updates existing user record
 - `deleteUser(id)`: Removes user from database
@@ -780,7 +1371,7 @@ npm run build
 ## 📚 Key Learnings & Decisions
 
 ### Authentication Architecture
-- **Dummy Auth**: Email/password validation in frontend (tushar@wobot.ai)
+- **Dummy Auth**: Email/password validation in frontend (john@wobot.ai)
 - **localStorage**: Persists user and token across sessions
 - **Route Guards**: ProtectedRoute component wraps authenticated pages
 - **Route Preservation**: Saves intended destination, redirects after login
@@ -831,6 +1422,22 @@ npm run build
 - **AI-Ready**: Customer business details field for future AI integration
 - **Progressive Enhancement**: Works without JS (base content)
 - **Mobile-First**: Responsive from smallest screens
+
+### Data Flow Architecture
+- **Single Source of Truth**: All data stored in localStorage with unique keys
+- **Cascade Deletes**: Deleting a pilot removes all cameras, assets, objectives, and remarks
+- **Activity Logging**: Asset operations automatically create activity entries
+- **User Lookup**: Activity feed joins remarks with users to display names
+- **Base64 Encoding**: Images and files stored as base64 for localStorage compatibility
+- **Optimistic Updates**: UI updates immediately, localStorage syncs in background
+- **Type Safety**: Full TypeScript coverage with optional chaining for undefined safety
+
+### File Upload Strategy
+- **react-dropzone**: Drag-and-drop with file type and size validation
+- **Base64 Encoding**: Convert files to base64 for localStorage storage
+- **Preview Generation**: Images previewed directly from base64 data URLs
+- **Download Handling**: Convert base64 back to Blob for browser downloads
+- **Activity Tracking**: Upload and download events logged automatically
 
 ## 📝 Code Style Guide
 
@@ -911,82 +1518,162 @@ npm install -D msw
 
 ## 🎯 Next Steps for Development
 
-1. **Complete Dashboard Pages**
-   - Implement `/pilots` list view (currently redirects to dashboard)
-   - Build `/alerts`, `/assets`, `/settings` pages
-   - Add PilotDetailsPage with full information and timeline
-   - Implement pilot editing and deletion
-   - ✅ User management (list, create, view, update, delete) - COMPLETED
-   - ✅ Customer management (list, create, view, update, delete) - COMPLETED
-
-2. **Backend Integration**
+1. **Backend Integration**
    - Replace dummy auth with real API authentication
    - JWT token validation and refresh
-   - API endpoints for pilot CRUD operations
-   - Real-time pilot status updates
-   - User management and permissions
+   - API endpoints for all CRUD operations
+   - Real-time updates with WebSockets
+   - Cloud storage for camera frames and assets
+   - Database migration from localStorage to PostgreSQL/MongoDB
 
-3. **Enhanced Pilot Management**
+2. **Enhanced Pilot Management**
+   - ✅ Camera management with frame uploads - COMPLETED
+   - ✅ Asset management with categorization - COMPLETED
+   - ✅ Objectives tracking - COMPLETED
+   - ✅ Activity feed with user names - COMPLETED
+   - ✅ Pilot deletion with cascade - COMPLETED
    - Advanced filtering and search
    - Bulk operations (export, archive)
-   - Activity logs and audit trail
    - Team collaboration features
-   - Document uploads and sharing
+   - Email notifications for status changes
 
-4. **Implement AI Image Generation**
+3. **Implement AI Image Generation**
    - Use `customerBusinessDetails` field
    - Integrate with Stable Diffusion or DALL-E API
-   - Generate on form submission
-   - Cache generated images
+   - Generate contextual background images
+   - Cache generated images in cloud storage
 
-5. **Customer Onboarding Flow**
+4. **Customer Onboarding Flow**
    - Complete camera details page workflow
    - Multi-step form validation
    - Progress indicator across steps
-   - Email notifications to users
+   - Email notifications to customers
    - Analytics and conversion tracking
 
-6. **Production Readiness**
+5. **Production Readiness**
    - Add comprehensive error boundaries
-   - Implement loading states for async operations
+   - Implement loading states for all async operations
    - Session timeout and re-authentication
    - Rate limiting and security headers
    - Analytics integration (Google Analytics, Mixpanel)
+   - Performance optimization (code splitting, lazy loading)
+   - SEO optimization for public pages
+
+6. **Testing & Quality Assurance**
+   - Unit tests with Vitest
+   - Component tests with React Testing Library
+   - E2E tests with Playwright
+   - Accessibility audits (WCAG 2.1)
+   - Performance audits (Lighthouse)
 
 ## 📊 Current Implementation Status
 
 ### ✅ Completed Features
-- Authentication system with session persistence
-- Dashboard with pilot overview and stats
-- Pilot list with status tracking and progress bars
-- User management system (CRUD operations)
-- Customer management system (CRUD operations)
-- Link generator for onboarding experiences
-- Customer welcome page with customization
-- Camera details and setup pages
-- Protected routes and route guards
-- Responsive sidebar navigation
-- Toast notifications
-- Form validation
-- Delete confirmation modals
-- Search and filter functionality
-- Real-time preview for link generator
+
+#### Authentication & Access Control
+- ✅ Login/logout with dummy authentication
+- ✅ Session persistence with localStorage
+- ✅ Protected routes and route guards
+- ✅ Role-based access (Admin/User)
+- ✅ User type distinction (Platform/Partner)
+
+#### Pilot Management
+- ✅ Dashboard with recent pilots overview
+- ✅ Pilot list page with search and filtering
+- ✅ Pilot details page with tabbed interface
+- ✅ Pilot creation wizard
+- ✅ Pilot deletion with cascade (removes all related data)
+- ✅ Status tracking (Draft, Active, In Progress, Completed, On Hold, Issues)
+- ✅ Progress tracking with visual indicators
+- ✅ User assignment filtering
+
+#### Camera Management
+- ✅ Create cameras for each pilot
+- ✅ Upload multiple frames per camera (drag-and-drop)
+- ✅ Set primary frame with visual badge
+- ✅ Edit camera names and comments inline
+- ✅ Update camera status (Pending, Installed, Active, Inactive, Issue)
+- ✅ Delete cameras with confirmation
+- ✅ Frame preview in grid layout
+- ✅ Base64 image storage
+
+#### Asset Management
+- ✅ Upload assets with drag-and-drop
+- ✅ Categorize assets (Document, Image, Video, Contract, Report, Other)
+- ✅ Visual preview for all file types
+- ✅ Download assets with activity logging
+- ✅ Delete assets with confirmation and logging
+- ✅ Grid layout with category badges
+- ✅ Base64 file storage
+
+#### Objectives & Activity
+- ✅ Create and track objectives
+- ✅ Status tracking (Not Started, In Progress, Completed, Blocked)
+- ✅ Priority levels (Low, Medium, High, Critical)
+- ✅ Due date management
+- ✅ Assigned user selection
+- ✅ Activity feed with chronological display
+- ✅ User names displayed in activity (not just emails)
+- ✅ Automated activity logging for asset operations
+- ✅ Success Criteria feature with percentage targets and descriptions
+  - ✅ Edit mode with number input (1-100%) and text field
+  - ✅ Display mode with circular SVG progress indicator with green gradient
+  - ✅ Activity tracking for success criteria updates
+  - ✅ Success criteria badges on objective cards in pilot details
+- ✅ ROI Configuration with interactive canvas
+  - ✅ Multi-step configuration (Location Selection → Camera & ROI Drawing)
+  - ✅ Upload frame for ROI drawing with drag-and-drop
+  - ✅ Draw multiple ROIs with click-to-draw rectangles
+  - ✅ Inline ROI name editing
+  - ✅ Delete individual ROIs or clear all
+  - ✅ ROI profile templates (Person, Vehicle, Zone Violation, Crowd, Object, Face, License Plate)
+  - ✅ Location multi-select with add-new functionality
+- ✅ Use Case section for business context description
+- ✅ Section reorganization for optimal UX flow (Use Case → Success Criteria → ROI Configuration)
+
+#### User Management
+- ✅ User list with search and filtering
+- ✅ Create, edit, delete users (admin only)
+- ✅ Role selection (Admin/User)
+- ✅ User type selection (Platform/Partner)
+- ✅ User details page
+
+#### Customer Management
+- ✅ Customer list with search
+- ✅ Create, edit, delete customers
+- ✅ Customer details page
+- ✅ Form validation
+
+#### UI/UX Features
+- ✅ Always-collapsed sidebar with hover tooltips
+- ✅ Temporarily hidden Assets and Settings navigation items
+- ✅ Toast notifications for all actions
+- ✅ Confirmation modals for destructive actions
+- ✅ Loading states and error handling
+- ✅ Responsive design (mobile-first)
+- ✅ Framer Motion animations with staggered section appearances
+- ✅ Real-time preview for link generator
+- ✅ File upload with react-dropzone
+- ✅ Search functionality across all list views
+- ✅ Button alignment fixes (flex items-center for icons and text)
+- ✅ Circular progress indicators with green gradients
+- ✅ Interactive canvas with click-to-draw functionality
+- ✅ Inline editing for ROI names
+- ✅ Multi-select dropdowns with chip display
 
 ### 🚧 In Progress
-- Pilot details page enhancement
-- Activity tracking for users and customers
 - Advanced analytics dashboard
+- Bulk operations for pilots
 
 ### 📋 Planned Features
 - Alerts and notifications system
-- Digital asset management
 - User settings and preferences
 - Email notifications
-- Export functionality
-- Bulk operations
-- Advanced reporting
+- Export functionality (PDF, CSV)
+- Advanced reporting and analytics
+- Real-time collaboration features
 
 ---
 
-**Built with ❤️ by Wobot AI** | OnboardEase v3.0 (with User & Customer Management)
+**Built with ❤️ by Wobot AI** | OnboardEase v4.0 (Full Pilot Management Suite)
 

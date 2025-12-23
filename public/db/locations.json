@@ -1,0 +1,72 @@
+{
+  "locations": [
+    {
+      "id": "loc1000001",
+      "name": "Austin Main Office",
+      "cityRegion": "Austin, Texas",
+      "cameraCount": "8",
+      "status": "active",
+      "createdAt": "2025-11-01T10:05:00.000Z",
+      "updatedAt": "2025-12-20T14:30:00.000Z"
+    },
+    {
+      "id": "loc1000002",
+      "name": "Austin Warehouse",
+      "cityRegion": "Austin, Texas",
+      "cameraCount": "7",
+      "status": "active",
+      "createdAt": "2025-11-01T10:10:00.000Z",
+      "updatedAt": "2025-12-20T14:30:00.000Z"
+    },
+    {
+      "id": "loc1000003",
+      "name": "SF Downtown Store",
+      "cityRegion": "San Francisco, CA",
+      "cameraCount": "12",
+      "status": "active",
+      "createdAt": "2025-10-15T09:20:00.000Z",
+      "updatedAt": "2025-12-22T16:45:00.000Z"
+    },
+    {
+      "id": "loc1000004",
+      "name": "SF Warehouse District",
+      "cityRegion": "San Francisco, CA",
+      "cameraCount": "10",
+      "status": "active",
+      "createdAt": "2025-10-15T09:25:00.000Z",
+      "updatedAt": "2025-12-22T16:45:00.000Z"
+    },
+    {
+      "id": "loc1000005",
+      "name": "SF Corporate HQ",
+      "cityRegion": "San Francisco, CA",
+      "cameraCount": "6",
+      "status": "active",
+      "createdAt": "2025-10-15T09:30:00.000Z",
+      "updatedAt": "2025-12-22T16:45:00.000Z"
+    },
+    {
+      "id": "loc1000006",
+      "name": "Seattle Tech Campus",
+      "cityRegion": "Seattle, WA",
+      "cameraCount": "8",
+      "status": "planned",
+      "createdAt": "2025-12-01T11:35:00.000Z",
+      "updatedAt": "2025-12-15T10:20:00.000Z"
+    },
+    {
+      "id": "loc1000007",
+      "name": "Trampoline Park Main Facility",
+      "cityRegion": "San Francisco, CA",
+      "cameraCount": "22",
+      "status": "active",
+      "createdAt": "2025-11-20T08:50:00.000Z",
+      "updatedAt": "2025-12-23T09:10:00.000Z"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-12-23T09:10:00.000Z",
+    "totalLocations": 7
+  }
+}

@@ -1,0 +1,272 @@
+{
+  "objectives": [
+    {
+      "id": "obj0000001",
+      "pilotId": "pilot00001",
+      "title": "Complete Network Infrastructure Setup",
+      "description": "Install and configure network switches, PoE injectors, and cabling for all camera locations",
+      "usecase": "Foundation for camera connectivity",
+      "successCriteria": {
+        "targetPercentage": 100,
+        "description": "Network uptime and connectivity across all camera endpoints"
+      },
+      "status": "completed",
+      "priority": "high",
+      "assignedTo": ["1"],
+      "dueDate": "2025-11-10",
+      "progress": 100,
+      "completedAt": "2025-11-08T16:30:00.000Z",
+      "order": 0,
+      "createdAt": "2025-11-01T10:15:00.000Z",
+      "createdBy": "john@wobot.ai",
+      "updatedAt": "2025-11-08T16:30:00.000Z"
+    },
+    {
+      "id": "obj0000002",
+      "pilotId": "pilot00001",
+      "title": "Install All Camera Hardware",
+      "description": "Mount and connect all 15 cameras across both locations",
+      "usecase": "Physical deployment of surveillance equipment",
+      "successCriteria": {
+        "targetPercentage": 95,
+        "description": "Camera operational status with clear video feed quality"
+      },
+      "status": "completed",
+      "priority": "high",
+      "assignedTo": ["1", "2"],
+      "dueDate": "2025-11-20",
+      "progress": 100,
+      "completedAt": "2025-11-18T14:20:00.000Z",
+      "order": 1,
+      "createdAt": "2025-11-01T10:20:00.000Z",
+      "createdBy": "john@wobot.ai",
+      "updatedAt": "2025-11-18T14:20:00.000Z"
+    },
+    {
+      "id": "obj0000003",
+      "pilotId": "pilot00001",
+      "title": "Configure Video Management System",
+      "description": "Set up VMS server, add all cameras, configure recording schedules and retention policies",
+      "usecase": "Central management and recording",
+      "successCriteria": {
+        "targetPercentage": 99,
+        "description": "Recording reliability and playback performance"
+      },
+      "status": "in-progress",
+      "priority": "high",
+      "assignedTo": ["1"],
+      "dueDate": "2025-12-15",
+      "progress": 75,
+      "order": 2,
+      "createdAt": "2025-11-01T10:25:00.000Z",
+      "createdBy": "john@wobot.ai",
+      "updatedAt": "2025-12-20T14:30:00.000Z"
+    },
+    {
+      "id": "obj0000004",
+      "pilotId": "pilot00001",
+      "title": "User Training and Documentation",
+      "description": "Conduct training sessions for staff and provide comprehensive documentation",
+      "usecase": "Client enablement and knowledge transfer",
+      "successCriteria": {
+        "targetPercentage": 90,
+        "description": "Staff competency in system operation and troubleshooting"
+      },
+      "status": "pending",
+      "priority": "medium",
+      "assignedTo": ["2"],
+      "dueDate": "2025-12-30",
+      "progress": 20,
+      "order": 3,
+      "createdAt": "2025-11-01T10:30:00.000Z",
+      "createdBy": "john@wobot.ai",
+      "updatedAt": "2025-12-10T09:15:00.000Z"
+    },
+    {
+      "id": "obj0000005",
+      "pilotId": "pilot00002",
+      "title": "Site Survey and Planning",
+      "description": "Complete detailed site surveys for all three retail locations",
+      "usecase": "Optimal camera placement planning",
+      "successCriteria": {
+        "targetPercentage": 100,
+        "description": "Coverage of all critical retail areas with no blind spots"
+      },
+      "status": "completed",
+      "priority": "high",
+      "assignedTo": ["1"],
+      "dueDate": "2025-10-25",
+      "progress": 100,
+      "completedAt": "2025-10-23T11:45:00.000Z",
+      "order": 0,
+      "createdAt": "2025-10-15T09:30:00.000Z",
+      "createdBy": "john@wobot.ai",
+      "updatedAt": "2025-10-23T11:45:00.000Z"
+    },
+    {
+      "id": "obj0000006",
+      "pilotId": "pilot00002",
+      "title": "Deploy Retail Analytics",
+      "description": "Configure people counting, heat mapping, and dwell time analytics",
+      "usecase": "Business intelligence and customer insights",
+      "successCriteria": {
+        "targetPercentage": 92,
+        "description": "Accuracy in customer counting and behavior tracking"
+      },
+      "status": "in-progress",
+      "priority": "high",
+      "assignedTo": ["3"],
+      "dueDate": "2025-12-20",
+      "progress": 60,
+      "order": 1,
+      "createdAt": "2025-10-15T09:35:00.000Z",
+      "createdBy": "john@wobot.ai",
+      "updatedAt": "2025-12-22T16:45:00.000Z"
+    },
+    {
+      "id": "obj0000007",
+      "pilotId": "pilot00002",
+      "title": "POS Integration",
+      "description": "Integrate video system with point-of-sale systems for transaction verification",
+      "usecase": "Loss prevention and fraud detection",
+      "successCriteria": {
+        "targetPercentage": 95,
+        "description": "Transaction-to-video correlation accuracy for fraud detection"
+      },
+      "status": "in-progress",
+      "priority": "medium",
+      "assignedTo": ["1", "3"],
+      "dueDate": "2025-12-28",
+      "progress": 45,
+      "order": 2,
+      "createdAt": "2025-10-15T09:40:00.000Z",
+      "createdBy": "john@wobot.ai",
+      "updatedAt": "2025-12-18T13:20:00.000Z"
+    },
+    {
+      "id": "obj0000008",
+      "pilotId": "pilot00003",
+      "title": "Obtain Building Permits",
+      "description": "Submit and obtain necessary permits for camera installation in commercial building",
+      "usecase": "Regulatory compliance",
+      "successCriteria": {
+        "targetPercentage": 100,
+        "description": "Compliance with all local and federal regulations"
+      },
+      "status": "pending",
+      "priority": "high",
+      "assignedTo": ["2"],
+      "dueDate": "2025-12-20",
+      "progress": 30,
+      "order": 0,
+      "createdAt": "2025-12-01T11:40:00.000Z",
+      "createdBy": "gstaniforth@smartfranchise.ai",
+      "updatedAt": "2025-12-15T10:20:00.000Z"
+    },
+    {
+      "id": "obj0000009",
+      "pilotId": "pilot00003",
+      "title": "Network Security Configuration",
+      "description": "Configure VLANs, firewall rules, and secure remote access for camera network",
+      "usecase": "Cybersecurity and data protection",
+      "successCriteria": {
+        "targetPercentage": 100,
+        "description": "Security audit score for network infrastructure protection"
+      },
+      "status": "pending",
+      "priority": "high",
+      "assignedTo": ["4"],
+      "dueDate": "2025-12-25",
+      "progress": 0,
+      "order": 1,
+      "createdAt": "2025-12-01T11:45:00.000Z",
+      "createdBy": "gstaniforth@smartfranchise.ai",
+      "updatedAt": "2025-12-01T11:45:00.000Z"
+    },
+    {
+      "id": "obj0000010",
+      "pilotId": "pilot00004",
+      "title": "Safety Zone Monitoring Setup",
+      "description": "Configure AI-based safety monitoring for all trampoline zones",
+      "usecase": "Customer safety and incident prevention",
+      "successCriteria": {
+        "targetPercentage": 98,
+        "description": "Accuracy in detecting unsafe behavior and zone violations"
+      },
+      "status": "in-progress",
+      "priority": "high",
+      "assignedTo": ["1", "3"],
+      "dueDate": "2025-12-25",
+      "progress": 70,
+      "order": 0,
+      "createdAt": "2025-11-20T09:15:00.000Z",
+      "createdBy": "john@wobot.ai",
+      "updatedAt": "2025-12-23T09:10:00.000Z"
+    },
+    {
+      "id": "obj0000011",
+      "pilotId": "pilot00004",
+      "title": "Customer Analytics Dashboard",
+      "description": "Set up dashboard for visitor counting, peak hours analysis, and capacity management",
+      "usecase": "Business operations optimization",
+      "successCriteria": {
+        "targetPercentage": 90,
+        "description": "Accuracy on customer wait time at checkout with full journey time"
+      },
+      "status": "pending",
+      "priority": "medium",
+      "assignedTo": ["3"],
+      "dueDate": "2025-12-30",
+      "progress": 25,
+      "order": 1,
+      "createdAt": "2025-11-20T09:20:00.000Z",
+      "createdBy": "john@wobot.ai",
+      "updatedAt": "2025-12-22T15:30:00.000Z"
+    },
+    {
+      "id": "obj0000012",
+      "pilotId": "pilot00004",
+      "title": "Mobile App Integration",
+      "description": "Enable mobile viewing and alerts for facility managers",
+      "usecase": "Remote monitoring capability",
+      "successCriteria": {
+        "targetPercentage": 95,
+        "description": "App responsiveness and notification delivery speed"
+      },
+      "status": "blocked",
+      "priority": "low",
+      "assignedTo": ["1"],
+      "dueDate": "2026-01-10",
+      "progress": 10,
+      "order": 2,
+      "createdAt": "2025-11-20T09:25:00.000Z",
+      "createdBy": "john@wobot.ai",
+      "updatedAt": "2025-12-20T11:00:00.000Z"
+    },
+    {
+      "id": "obj0000013",
+      "pilotId": "pilot00004",
+      "title": "Footfall Counting",
+      "description": "Implement AI-powered footfall counting at entrance to track visitor numbers and peak hours",
+      "usecase": "Customer analytics and capacity management",
+      "successCriteria": {
+        "targetPercentage": 93,
+        "description": "Visitor counting accuracy during peak and off-peak hours"
+      },
+      "status": "in-progress",
+      "priority": "high",
+      "assignedTo": ["1", "3"],
+      "dueDate": "2025-12-28",
+      "progress": 60,
+      "order": 3,
+      "createdAt": "2025-12-01T10:00:00.000Z",
+      "createdBy": "john@wobot.ai",
+      "updatedAt": "2025-12-23T14:30:00.000Z"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-12-23T14:30:00.000Z",
+    "totalObjectives": 13
+  }
+}

@@ -5,76 +5,99 @@ import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '../components/shared/Button';
 import { Input } from '../components/shared/Input';
 import { FileUploadZone } from '../components/shared/FileUploadZone';
-import { ImagePreview } from '../components/shared/ImagePreview';
 import { useAuth } from '../contexts/AuthContext';
-import { getPilotById, updatePilot } from '../utils/db';
-import { getObjectivesByPilot, createObjective, updateObjective, deleteObjective, calculatePilotProgress } from '../utils/objectiveDb';
-import { getCamerasByPilot, createCamera, updateCamera, deleteCamera, addFrameToCamera, removeFrameFromCamera, setPrimaryFrame } from '../utils/cameraDb';
-import { getAssetsByPilot, createAsset, deleteAsset } from '../utils/assetDb';
-import { getRemarksByPilot } from '../utils/remarkDb';
-import { getAllUsers } from '../utils/userDb';
-import { getCustomerByEmail } from '../utils/customerDb';
-import type { PilotRecord } from '../types/onboarding';
-import type { Objective, ObjectiveStatus, ObjectivePriority } from '../types/objective';
-import type { Camera } from '../types/camera';
-import type { Asset } from '../types/asset';
-import type { Remark } from '../types/remark';
-import type { User } from '../types/auth';
-import type { CameraStatus } from '../types/camera';
-import type { AssetCategory } from '../types/asset';
-import { getObjectiveStatusBadgeStyle, getObjectiveStatusDisplayText } from '../types/objective';
-import { getCameraStatusBadgeStyle } from '../types/camera';
-import { getAssetCategoryIcon, getAssetCategoryColor } from '../types/asset';
-import { getRemarkTypeIcon } from '../types/remark';
-import { getStatusBadgeStyle } from '../types/pilot';
-import toast from 'react-hot-toast';
+import { getPilotById, updatePilot, deletePilot } from "../utils/db";
+import {
+  getObjectivesByPilot,
+  createObjective,
+  updateObjective,
+  deleteObjective,
+  calculatePilotProgress,
+} from "../utils/objectiveDb";
+import {
+  getCamerasByPilot,
+  createCamera,
+  updateCamera,
+  deleteCamera,
+  addFrameToCamera,
+  removeFrameFromCamera,
+  setPrimaryFrame,
+} from "../utils/cameraDb";
+import { getAssetsByPilot, createAsset, deleteAsset } from "../utils/assetDb";
+import { getRemarksByPilot } from "../utils/remarkDb";
+import { getAllUsers } from "../utils/userDb";
+import { getCustomerByEmail } from "../utils/customerDb";
+import { getLocationsByIds } from "../utils/locationDb";
+import type { PilotRecord } from "../types/onboarding";
+import type { Objective, ObjectiveStatus, ObjectivePriority } from "../types/objective";
+import type { Camera } from "../types/camera";
+import type { Asset } from "../types/asset";
+import type { Remark } from "../types/remark";
+import type { User } from "../types/auth";
+import type { Location } from "../types/location";
+import type { CameraStatus } from "../types/camera";
+import type { AssetCategory } from "../types/asset";
+import { getObjectiveStatusBadgeStyle, getObjectiveStatusDisplayText } from "../types/objective";
+import { getCameraStatusBadgeStyle } from "../types/camera";
+import { getAssetCategoryIcon, getAssetCategoryColor } from "../types/asset";
+import { getRemarkTypeIcon } from "../types/remark";
+import { getStatusBadgeStyle, type PilotStatus } from "../types/pilot";
+import toast from "react-hot-toast";
 
-type Tab = 'overview' | 'objectives' | 'cameras' | 'assets' | 'activity';
+type Tab = "overview" | "objectives" | "locations" | "assets" | "activity" | "cameras";
 
 export function PilotDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { state: authState } = useAuth();
-  
+
   const [pilot, setPilot] = useState<PilotRecord | null>(null);
   const [objectives, setObjectives] = useState<Objective[]>([]);
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [remarks, setRemarks] = useState<Remark[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [locations, setLocations] = useState<Location[]>([]);
+
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Objective form state
-  const [showObjectiveForm, setShowObjectiveForm] = useState(false);
+
+  // Objective modal state
+  const [showObjectiveModal, setShowObjectiveModal] = useState(false);
   const [newObjective, setNewObjective] = useState({
-    title: '',
-    description: '',
-    priority: 'medium' as ObjectivePriority,
+    title: "",
+    description: "",
+    priority: "medium" as ObjectivePriority,
   });
-  
-  // Camera form state
-  const [showCameraForm, setShowCameraForm] = useState(false);
+
+  // Camera modal state
+  const [showCameraModal, setShowCameraModal] = useState(false);
+  const [editingCameraId, setEditingCameraId] = useState<string | null>(null);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [newCamera, setNewCamera] = useState({
-    name: '',
-    comments: '',
-    status: 'planned' as CameraStatus,
+    name: "",
+    comments: "",
+    status: "planned" as CameraStatus,
+    frames: [] as File[],
   });
   const [selectedCameraForFrames, setSelectedCameraForFrames] = useState<string | null>(null);
-  
-  // Asset form state
-  const [showAssetForm, setShowAssetForm] = useState(false);
+
+  // AI Summary modal state
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+
+  // Asset modal state
+  const [showAssetModal, setShowAssetModal] = useState(false);
   const [newAsset, setNewAsset] = useState({
-    category: 'other' as AssetCategory,
-    description: '',
-    remarks: '',
+    title: "",
+    category: "other" as AssetCategory,
+    description: "",
+    remarks: "",
   });
 
   // Load pilot data
   const loadPilotData = useCallback(async () => {
     if (!id) return;
-    
+
     try {
       setIsLoading(true);
       const [pilotData, objectivesData, camerasData, assetsData, remarksData, usersData] = await Promise.all([
@@ -85,27 +108,33 @@ export function PilotDetailsPage() {
         getRemarksByPilot(id),
         getAllUsers(),
       ]);
-      
+
       if (!pilotData) {
-        toast.error('Pilot not found');
-        navigate('/dashboard');
+        toast.error("Pilot not found");
+        navigate("/dashboard");
         return;
       }
-      
+
       setPilot(pilotData);
       setObjectives(objectivesData);
       setCameras(camerasData);
       setAssets(assetsData);
       setRemarks(remarksData);
       setUsers(usersData);
-      
+
+      // Load locations if available
+      if (pilotData.locationIds && pilotData.locationIds.length > 0) {
+        const locationsData = await getLocationsByIds(pilotData.locationIds);
+        setLocations(locationsData);
+      }
+
       // Load customer if available (for future use)
       if (pilotData.customerId && pilotData.contactEmail) {
         getCustomerByEmail(pilotData.contactEmail).catch(console.error);
       }
     } catch (error) {
-      console.error('Error loading pilot data:', error);
-      toast.error('Failed to load pilot data');
+      console.error("Error loading pilot data:", error);
+      toast.error("Failed to load pilot data");
     } finally {
       setIsLoading(false);
     }
@@ -127,111 +156,158 @@ export function PilotDetailsPage() {
 
   const handleCreateObjective = async () => {
     if (!pilot || !authState.user) return;
-    
+
     if (!newObjective.title.trim()) {
-      toast.error('Please enter an objective title');
+      toast.error("Please enter an objective title");
       return;
     }
-    
+
     try {
       const created = await createObjective({
         pilotId: pilot.id,
         title: newObjective.title,
         description: newObjective.description,
-        status: 'pending',
+        status: "pending",
         priority: newObjective.priority,
         progress: 0,
         createdBy: authState.user.email,
       });
-      
+
       setObjectives([...objectives, created]);
-      setNewObjective({ title: '', description: '', priority: 'medium' });
-      setShowObjectiveForm(false);
-      toast.success('Objective added');
+      setNewObjective({ title: "", description: "", priority: "medium" });
+      setShowObjectiveModal(false);
+      toast.success("Objective added");
       await loadPilotData(); // Reload to get activity log
     } catch (error) {
-      console.error('Error creating objective:', error);
-      toast.error('Failed to create objective');
+      console.error("Error creating objective:", error);
+      toast.error("Failed to create objective");
     }
   };
 
   const handleUpdateObjectiveStatus = async (objectiveId: string, status: ObjectiveStatus) => {
     if (!authState.user) return;
-    
+
     try {
-      const updated = await updateObjective(objectiveId, { 
-        status,
-        completedAt: status === 'completed' ? new Date().toISOString() : undefined 
-      }, authState.user.email);
-      
+      const updated = await updateObjective(
+        objectiveId,
+        {
+          status,
+          completedAt: status === "completed" ? new Date().toISOString() : undefined,
+        },
+        authState.user.email
+      );
+
       if (updated) {
-        setObjectives(objectives.map(o => o.id === objectiveId ? updated : o));
+        setObjectives(objectives.map((o) => (o.id === objectiveId ? updated : o)));
         await loadPilotData(); // Reload to get activity log
       }
     } catch (error) {
-      console.error('Error updating objective:', error);
-      toast.error('Failed to update objective');
+      console.error("Error updating objective:", error);
+      toast.error("Failed to update objective");
     }
   };
 
   const handleDeleteObjective = async (objectiveId: string) => {
-    if (!authState.user || !window.confirm('Are you sure you want to delete this objective?')) return;
-    
+    if (!authState.user || !window.confirm("Are you sure you want to delete this objective?")) return;
+
     try {
       await deleteObjective(objectiveId, authState.user.email);
-      setObjectives(objectives.filter(o => o.id !== objectiveId));
-      toast.success('Objective deleted');
+      setObjectives(objectives.filter((o) => o.id !== objectiveId));
+      toast.success("Objective deleted");
       await loadPilotData(); // Reload to get activity log
     } catch (error) {
-      console.error('Error deleting objective:', error);
-      toast.error('Failed to delete objective');
+      console.error("Error deleting objective:", error);
+      toast.error("Failed to delete objective");
     }
   };
 
   // Camera handlers
   const handleCreateCamera = async () => {
     if (!pilot || !authState.user) return;
-    
+
     if (!newCamera.name.trim()) {
-      toast.error('Please enter camera name');
+      toast.error("Please enter camera name");
       return;
     }
-    
+
+    if (!selectedLocationId) {
+      toast.error("Please select a location");
+      return;
+    }
+
     try {
       const created = await createCamera({
         pilotId: pilot.id,
+        locationId: selectedLocationId,
         name: newCamera.name,
-        location: '', // Keep location as empty string for backward compatibility
+        location: "", // Keep location as empty string for backward compatibility
         status: newCamera.status,
         notes: newCamera.comments || undefined,
         frames: [],
         createdBy: authState.user.email,
       });
-      
-      setCameras([...cameras, created]);
-      setNewCamera({ name: '', comments: '', status: 'planned' });
-      setShowCameraForm(false);
-      toast.success('Camera added');
+
+      // Upload frames if any
+      if (newCamera.frames.length > 0) {
+        await handleAddCameraFrames(created.id, newCamera.frames);
+      }
+
+      // Reload to get updated camera with frames
+      await loadPilotData();
+      setNewCamera({ name: "", comments: "", status: "planned", frames: [] });
+      setShowCameraModal(false);
+      toast.success("Camera added successfully");
     } catch (error) {
-      console.error('Error creating camera:', error);
-      toast.error('Failed to create camera');
+      console.error("Error creating camera:", error);
+      toast.error("Failed to create camera");
+    }
+  };
+
+  const handleUpdateCamera = async () => {
+    if (!pilot || !authState.user || !editingCameraId) return;
+
+    if (!newCamera.name.trim()) {
+      toast.error("Please enter camera name");
+      return;
+    }
+
+    try {
+      const cameraToUpdate = cameras.find((c) => c.id === editingCameraId);
+      if (!cameraToUpdate) return;
+
+      const updated = await updateCamera(editingCameraId, {
+        name: newCamera.name,
+        status: newCamera.status,
+        notes: newCamera.comments || undefined,
+      });
+
+      if (updated) {
+        setCameras(cameras.map((c) => (c.id === editingCameraId ? updated : c)));
+      }
+      setNewCamera({ name: "", comments: "", status: "planned", frames: [] });
+      setEditingCameraId(null);
+      setShowCameraModal(false);
+      toast.success("Camera updated successfully");
+    } catch (error) {
+      console.error("Error updating camera:", error);
+      toast.error("Failed to update camera");
     }
   };
 
   const handleAddCameraFrames = async (cameraId: string, files: File[]) => {
     if (!authState.user) return;
-    
+
     try {
-      let updatedCamera = cameras.find(c => c.id === cameraId);
+      let updatedCamera = cameras.find((c) => c.id === cameraId);
       if (!updatedCamera) return;
-      
+
       for (const file of files) {
         const reader = new FileReader();
         const base64Promise = new Promise<string>((resolve) => {
           reader.onload = () => resolve(reader.result as string);
           reader.readAsDataURL(file);
         });
-        
+
         const fileUrl = await base64Promise;
         const result = await addFrameToCamera(cameraId, {
           fileName: file.name,
@@ -239,15 +315,15 @@ export function PilotDetailsPage() {
           fileSize: file.size,
           isPrimary: updatedCamera.frames.length === 0, // First frame is primary
         });
-        
+
         if (result) updatedCamera = result;
       }
-      
-      setCameras(cameras.map(c => c.id === cameraId ? updatedCamera! : c));
+
+      setCameras(cameras.map((c) => (c.id === cameraId ? updatedCamera! : c)));
       toast.success(`${files.length} frame(s) uploaded`);
     } catch (error) {
-      console.error('Error adding frames:', error);
-      toast.error('Failed to upload frames');
+      console.error("Error adding frames:", error);
+      toast.error("Failed to upload frames");
     }
   };
 
@@ -255,12 +331,12 @@ export function PilotDetailsPage() {
     try {
       const updated = await removeFrameFromCamera(cameraId, frameId);
       if (updated) {
-        setCameras(cameras.map(c => c.id === cameraId ? updated : c));
-        toast.success('Frame removed');
+        setCameras(cameras.map((c) => (c.id === cameraId ? updated : c)));
+        toast.success("Frame removed");
       }
     } catch (error) {
-      console.error('Error removing frame:', error);
-      toast.error('Failed to remove frame');
+      console.error("Error removing frame:", error);
+      toast.error("Failed to remove frame");
     }
   };
 
@@ -268,124 +344,65 @@ export function PilotDetailsPage() {
     try {
       const updated = await setPrimaryFrame(cameraId, frameId);
       if (updated) {
-        setCameras(cameras.map(c => c.id === cameraId ? updated : c));
-        toast.success('Primary frame set');
+        setCameras(cameras.map((c) => (c.id === cameraId ? updated : c)));
+        toast.success("Primary frame set");
       }
     } catch (error) {
-      console.error('Error setting primary frame:', error);
-      toast.error('Failed to set primary frame');
-    }
-  };
-
-  const handleUpdateCameraStatus = async (cameraId: string, status: CameraStatus) => {
-    try {
-      const updated = await updateCamera(cameraId, { status });
-      if (updated) {
-        setCameras(cameras.map(c => c.id === cameraId ? updated : c));
-      }
-    } catch (error) {
-      console.error('Error updating camera:', error);
-      toast.error('Failed to update camera');
-    }
-  };
-
-  const handleUpdateCameraName = async (cameraId: string, name: string) => {
-    try {
-      const updated = await updateCamera(cameraId, { name });
-      if (updated) {
-        setCameras(cameras.map(c => c.id === cameraId ? updated : c));
-      }
-    } catch (error) {
-      console.error('Error updating camera:', error);
-      toast.error('Failed to update camera');
-    }
-  };
-
-  const handleUpdateCameraComments = async (cameraId: string, notes: string) => {
-    try {
-      const updated = await updateCamera(cameraId, { notes });
-      if (updated) {
-        setCameras(cameras.map(c => c.id === cameraId ? updated : c));
-      }
-    } catch (error) {
-      console.error('Error updating camera:', error);
-      toast.error('Failed to update camera');
+      console.error("Error setting primary frame:", error);
+      toast.error("Failed to set primary frame");
     }
   };
 
   const handleDeleteCamera = async (cameraId: string) => {
-    if (!window.confirm('Are you sure you want to delete this camera?')) return;
-    
+    if (!window.confirm("Are you sure you want to delete this camera?")) return;
+
     try {
       await deleteCamera(cameraId);
-      setCameras(cameras.filter(c => c.id !== cameraId));
-      toast.success('Camera deleted');
+      setCameras(cameras.filter((c) => c.id !== cameraId));
+      toast.success("Camera deleted");
     } catch (error) {
-      console.error('Error deleting camera:', error);
-      toast.error('Failed to delete camera');
+      console.error("Error deleting camera:", error);
+      toast.error("Failed to delete camera");
     }
   };
 
   // Asset handlers
-  const handleUploadAssets = async (files: File[]) => {
-    if (!pilot || !authState.user) return;
-    
-    try {
-      const uploadedAssets = [];
-      
-      for (const file of files) {
-        const reader = new FileReader();
-        const base64Promise = new Promise<string>((resolve) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-        
-        const fileUrl = await base64Promise;
-        const asset = await createAsset({
-          pilotId: pilot.id,
-          fileName: file.name,
-          fileType: file.type,
-          fileSize: file.size,
-          fileUrl,
-          category: newAsset.category,
-          description: newAsset.description || undefined,
-          remarks: newAsset.remarks || undefined,
-          uploadedBy: authState.user.email,
-        });
-        
-        uploadedAssets.push(asset);
-      }
-      
-      setAssets([...assets, ...uploadedAssets]);
-      setNewAsset({ category: 'other', description: '', remarks: '' });
-      setShowAssetForm(false);
-      toast.success(`${uploadedAssets.length} asset(s) uploaded`);
-      await loadPilotData(); // Reload to get activity log
-    } catch (error) {
-      console.error('Error uploading assets:', error);
-      toast.error('Failed to upload assets');
-    }
-  };
-
   const handleDeleteAsset = async (assetId: string) => {
-    if (!authState.user || !window.confirm('Are you sure you want to delete this asset?')) return;
-    
+    if (!authState.user || !window.confirm("Are you sure you want to delete this asset?")) return;
+
     try {
       await deleteAsset(assetId, authState.user.email);
-      setAssets(assets.filter(a => a.id !== assetId));
-      toast.success('Asset deleted');
+      setAssets(assets.filter((a) => a.id !== assetId));
+      toast.success("Asset deleted");
       await loadPilotData(); // Reload to get activity log
     } catch (error) {
-      console.error('Error deleting asset:', error);
-      toast.error('Failed to delete asset');
+      console.error("Error deleting asset:", error);
+      toast.error("Failed to delete asset");
     }
   };
 
   const handleDownloadAsset = (asset: Asset) => {
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = asset.fileUrl;
     link.download = asset.fileName;
     link.click();
+  };
+
+  const handleDeletePilot = async () => {
+    if (
+      !pilot ||
+      !window.confirm(`Are you sure you want to delete the pilot "${pilot.name}"? This action cannot be undone.`)
+    )
+      return;
+
+    try {
+      await deletePilot(pilot.id);
+      toast.success("Pilot deleted successfully");
+      navigate("/pilots");
+    } catch (error) {
+      console.error("Error deleting pilot:", error);
+      toast.error("Failed to delete pilot");
+    }
   };
 
   if (isLoading) {
@@ -403,17 +420,52 @@ export function PilotDetailsPage() {
   }
 
   const progress = calculatePilotProgress(objectives);
-  const assignedUsers = users.filter(u => pilot.assignedUserIds?.includes(u.id));
+  const assignedUsers = users.filter((u) => pilot.assignedUserIds?.includes(u.id));
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          {/* Shareable Link Button at Top */}
+          <div className="mb-4 pb-4 border-b border-gray-200 flex justify-end gap-3">
+            <button
+              onClick={() => setShowSummaryModal(true)}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                />
+              </svg>
+              AI Summarize
+            </button>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/pilots/${id}`);
+                toast.success("Link copied to clipboard!");
+              }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
+              </svg>
+              Copy Shareable Link
+            </button>
+          </div>
+
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate("/dashboard")}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -425,9 +477,29 @@ export function PilotDetailsPage() {
                 <p className="text-gray-600 mt-1">{pilot.company}</p>
               </div>
             </div>
-            <span className={`px-4 py-2 rounded-full text-sm font-medium border ${getStatusBadgeStyle(pilot.status as any)}`}>
-              {pilot.status}
-            </span>
+            <div className="flex items-center gap-3">
+              <span
+                className={`px-4 py-2 rounded-full text-sm font-medium border ${getStatusBadgeStyle(
+                  pilot.status as PilotStatus
+                )}`}
+              >
+                {pilot.status}
+              </span>
+              <button
+                onClick={handleDeletePilot}
+                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                title="Delete Pilot"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Progress Bar */}
@@ -471,17 +543,17 @@ export function PilotDetailsPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <div className="border-b border-gray-200">
             <nav className="flex gap-8 px-6">
-              {(['overview', 'objectives', 'cameras', 'assets', 'activity'] as Tab[]).map((tab) => (
+              {(["overview", "objectives", "locations", "assets", "activity"] as Tab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === tab
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
                 >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {tab === "locations" ? "Locations & Cameras" : tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
             </nav>
@@ -489,69 +561,376 @@ export function PilotDetailsPage() {
 
           <div className="p-6">
             <AnimatePresence mode="wait">
-              {activeTab === 'overview' && (
+              {activeTab === "overview" && (
                 <motion.div
                   key="overview"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="space-y-6"
+                  className="space-y-8"
                 >
-                  {/* Overview content */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-3">Pilot Information</h3>
-                      <dl className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <dt className="text-gray-600">Location:</dt>
-                          <dd className="font-medium text-gray-900">{pilot.locationName}</dd>
+                  {/* Main Information Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Pilot Information Card */}
+                    <div className="lg:col-span-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
                         </div>
-                        <div className="flex justify-between">
-                          <dt className="text-gray-600">City/Region:</dt>
-                          <dd className="font-medium text-gray-900">{pilot.location || 'N/A'}</dd>
+                        <h3 className="text-lg font-bold text-gray-900">Pilot Information</h3>
+                      </div>
+                      <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-white rounded-lg p-4 border border-blue-100">
+                          <dt className="text-sm font-medium text-gray-600 mb-1">Company</dt>
+                          <dd className="text-base font-semibold text-gray-900">{pilot.company}</dd>
                         </div>
-                        <div className="flex justify-between">
-                          <dt className="text-gray-600">Start Date:</dt>
-                          <dd className="font-medium text-gray-900">{new Date(pilot.startDate).toLocaleDateString()}</dd>
+                        <div className="bg-white rounded-lg p-4 border border-blue-100">
+                          <dt className="text-sm font-medium text-gray-600 mb-1">Contact Email</dt>
+                          <dd className="text-base font-semibold text-blue-600">{pilot.contactEmail}</dd>
                         </div>
-                        <div className="flex justify-between">
-                          <dt className="text-gray-600">Camera Count:</dt>
-                          <dd className="font-medium text-gray-900">{pilot.cameraCount || 'TBD'}</dd>
+                        <div className="bg-white rounded-lg p-4 border border-blue-100 md:col-span-2">
+                          <dt className="text-sm font-medium text-gray-600 mb-2">Locations</dt>
+                          {locations.length > 0 ? (
+                            <div className="space-y-2">
+                              {locations.map((loc) => (
+                                <div key={loc.id} className="flex items-center justify-between bg-blue-50 rounded-lg p-2 border border-blue-100">
+                                  <div className="flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <div>
+                                      <span className="text-sm font-semibold text-gray-900">{loc.name}</span>
+                                      <span className="text-xs text-gray-600 ml-2">• {loc.cityRegion}</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`px-2 py-0.5 text-xs font-medium rounded border ${
+                                      loc.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' :
+                                      loc.status === 'inactive' ? 'bg-gray-50 text-gray-700 border-gray-200' :
+                                      'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                    }`}>
+                                      {loc.status}
+                                    </span>
+                                    <span className="text-xs text-gray-500">{loc.cameraCount} cameras</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <dd className="text-sm text-gray-500 italic">
+                              {pilot.locationName || pilot.location || "No locations added yet"}
+                            </dd>
+                          )}
+                        </div>
+                        <div className="bg-white rounded-lg p-4 border border-blue-100">
+                          <dt className="text-sm font-medium text-gray-600 mb-1">Start Date</dt>
+                          <dd className="text-base font-semibold text-gray-900">
+                            {new Date(pilot.startDate).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </dd>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 border border-blue-100">
+                          <dt className="text-sm font-medium text-gray-600 mb-1">Camera Count</dt>
+                          <dd className="text-base font-semibold text-gray-900">{pilot.cameraCount || "TBD"}</dd>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 border border-blue-100">
+                          <dt className="text-sm font-medium text-gray-600 mb-1">Created By</dt>
+                          <dd className="text-base font-semibold text-gray-900">{pilot.createdBy}</dd>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 border border-blue-100">
+                          <dt className="text-sm font-medium text-gray-600 mb-1">Created At</dt>
+                          <dd className="text-base font-semibold text-gray-900">
+                            {new Date(pilot.createdAt).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
+                          </dd>
                         </div>
                       </dl>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-3">Team</h3>
-                      <div className="space-y-2">
-                        {assignedUsers.map((user) => (
-                          <div key={user.id} className="flex items-center gap-2">
-                            {user.avatar && <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full" />}
-                            <span className="text-sm">{user.name}</span>
-                            <span className="text-xs text-gray-500">({user.userType})</span>
+
+                    {/* Team Members Card */}
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                            />
+                          </svg>
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900">Team Members</h3>
+                      </div>
+                      <div className="space-y-3">
+                        {assignedUsers.length > 0 ? (
+                          assignedUsers.map((user) => (
+                            <div key={user.id} className="bg-white rounded-lg p-4 border border-purple-100">
+                              <div className="flex items-center gap-3">
+                                {user.avatar ? (
+                                  <img src={user.avatar} alt={user.name} className="w-12 h-12 rounded-full" />
+                                ) : (
+                                  <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                    {user.name.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <div className="flex-1">
+                                  <p className="font-semibold text-gray-900">{user.name}</p>
+                                  <p className="text-sm text-gray-600">{user.email}</p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
+                                      {user.userType}
+                                    </span>
+                                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
+                                      {user.role}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="bg-white rounded-lg p-4 border border-purple-100 text-center">
+                            <p className="text-sm text-gray-500 italic">No team members assigned yet</p>
                           </div>
-                        ))}
+                        )}
                       </div>
                     </div>
                   </div>
 
                   {/* Recent Objectives */}
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-3">Recent Objectives</h3>
-                    <div className="space-y-2">
-                      {objectives.slice(0, 3).map((obj) => (
-                        <div key={obj.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <span className="text-sm font-medium">{obj.title}</span>
-                          <span className={`px-2 py-1 text-xs rounded-full border ${getObjectiveStatusBadgeStyle(obj.status)}`}>
-                            {getObjectiveStatusDisplayText(obj.status)}
-                          </span>
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                            />
+                          </svg>
                         </div>
-                      ))}
+                        <h3 className="text-lg font-bold text-gray-900">Recent Objectives</h3>
+                      </div>
+                      <button
+                        onClick={() => setActiveTab("objectives")}
+                        className="text-sm text-green-600 hover:text-green-700 font-medium"
+                      >
+                        View All →
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      {objectives.length > 0 ? (
+                        objectives.slice(0, 3).map((obj) => (
+                          <div key={obj.id} className="bg-white rounded-lg p-4 border border-green-100">
+                            <div className="flex items-center justify-between">
+                              <span className="text-base font-semibold text-gray-900">{obj.title}</span>
+                              <span
+                                className={`px-3 py-1 text-xs font-medium rounded-full border ${getObjectiveStatusBadgeStyle(
+                                  obj.status
+                                )}`}
+                              >
+                                {getObjectiveStatusDisplayText(obj.status)}
+                              </span>
+                            </div>
+                            {obj.description && (
+                              <p className="text-sm text-gray-600 mt-2 line-clamp-2">{obj.description}</p>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="bg-white rounded-lg p-8 border border-green-100 text-center">
+                          <svg className="w-12 h-12 text-gray-300 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                            />
+                          </svg>
+                          <p className="text-sm text-gray-500 italic">No objectives added yet</p>
+                          <button
+                            onClick={() => setActiveTab("objectives")}
+                            className="mt-3 text-sm text-green-600 hover:text-green-700 font-medium"
+                          >
+                            Add Your First Objective
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Cameras and Assets Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Cameras Overview */}
+                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-6 border border-orange-100">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
+                            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-bold text-gray-900">Cameras ({cameras.length})</h3>
+                        </div>
+                        <button
+                          onClick={() => setActiveTab("cameras")}
+                          className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+                        >
+                          View All →
+                        </button>
+                      </div>
+                      {cameras.length > 0 ? (
+                        <div className="space-y-3">
+                          {cameras.slice(0, 4).map((camera) => (
+                            <div key={camera.id} className="bg-white rounded-lg p-4 border border-orange-100">
+                              <div className="flex items-start justify-between mb-2">
+                                <h4 className="text-base font-semibold text-gray-900">{camera.name}</h4>
+                                <span
+                                  className={`px-2 py-1 text-xs font-medium rounded border ${getCameraStatusBadgeStyle(
+                                    camera.status
+                                  )}`}
+                                >
+                                  {camera.status}
+                                </span>
+                              </div>
+                              {camera.notes && (
+                                <p className="text-sm text-gray-600 mb-2 line-clamp-2">{camera.notes}</p>
+                              )}
+                              <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                  />
+                                </svg>
+                                <span>
+                                  {camera.frames.length} frame{camera.frames.length !== 1 ? "s" : ""}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="bg-white rounded-lg p-8 border border-orange-100 text-center">
+                          <svg className="w-12 h-12 text-gray-300 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                            />
+                          </svg>
+                          <p className="text-sm text-gray-500 italic">No cameras added yet</p>
+                          <button
+                            onClick={() => setActiveTab("cameras")}
+                            className="mt-3 text-sm text-orange-600 hover:text-orange-700 font-medium"
+                          >
+                            Add Your First Camera
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Assets Overview */}
+                    <div className="bg-gradient-to-br from-cyan-50 to-sky-50 rounded-xl p-6 border border-cyan-100">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center">
+                            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-bold text-gray-900">Assets ({assets.length})</h3>
+                        </div>
+                        <button
+                          onClick={() => setActiveTab("assets")}
+                          className="text-sm text-cyan-600 hover:text-cyan-700 font-medium"
+                        >
+                          View All →
+                        </button>
+                      </div>
+                      {assets.length > 0 ? (
+                        <div className="space-y-3">
+                          {assets.slice(0, 5).map((asset) => (
+                            <div key={asset.id} className="bg-white rounded-lg p-4 border border-cyan-100">
+                              <div className="flex items-start gap-3">
+                                <span
+                                  className={`px-2 py-1 text-xs font-medium rounded border ${getAssetCategoryColor(
+                                    asset.category
+                                  )}`}
+                                >
+                                  {getAssetCategoryIcon(asset.category)} {asset.category}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="text-sm font-semibold text-gray-900 truncate" title={asset.fileName}>
+                                    {asset.fileName}
+                                  </h4>
+                                  {asset.description && (
+                                    <p className="text-xs text-gray-600 mt-1 line-clamp-1">{asset.description}</p>
+                                  )}
+                                  <div className="mt-1 text-xs text-gray-500">
+                                    {(asset.fileSize / 1024).toFixed(1)} KB •{" "}
+                                    {new Date(asset.uploadedAt).toLocaleDateString()}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="bg-white rounded-lg p-8 border border-cyan-100 text-center">
+                          <svg className="w-12 h-12 text-gray-300 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                            />
+                          </svg>
+                          <p className="text-sm text-gray-500 italic">No assets uploaded yet</p>
+                          <button
+                            onClick={() => setActiveTab("assets")}
+                            className="mt-3 text-sm text-cyan-600 hover:text-cyan-700 font-medium"
+                          >
+                            Upload Your First Asset
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>
               )}
 
-              {activeTab === 'objectives' && (
+              {activeTab === "objectives" && (
                 <motion.div
                   key="objectives"
                   initial={{ opacity: 0, y: 10 }}
@@ -561,61 +940,64 @@ export function PilotDetailsPage() {
                 >
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900">Objectives</h3>
-                    <Button size="sm" onClick={() => setShowObjectiveForm(!showObjectiveForm)}>
-                      {showObjectiveForm ? 'Cancel' : '+ Add Objective'}
+                    <Button size="sm" onClick={() => setShowObjectiveModal(true)}>
+                      + Add Objective
                     </Button>
                   </div>
 
-                  {showObjectiveForm && (
-                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                      <Input
-                        label="Title"
-                        placeholder="e.g., Wait time reduction"
-                        value={newObjective.title}
-                        onChange={(e) => setNewObjective({ ...newObjective, title: e.target.value })}
-                      />
-                      <div className="mt-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
-                        <textarea
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          rows={3}
-                          placeholder="Add details..."
-                          value={newObjective.description}
-                          onChange={(e) => setNewObjective({ ...newObjective, description: e.target.value })}
-                        />
-                      </div>
-                      <div className="mt-3 flex gap-2">
-                        <Button onClick={handleCreateObjective}>Add Objective</Button>
-                        <Button variant="secondary" onClick={() => setShowObjectiveForm(false)}>Cancel</Button>
-                      </div>
-                    </div>
-                  )}
-
                   <div className="space-y-3">
                     {objectives.map((obj) => (
-                      <div key={obj.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-                        <div className="flex items-start justify-between">
+                      <div
+                        key={obj.id}
+                        className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                      >
+                        <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
                             <h4 className="font-semibold text-gray-900">{obj.title}</h4>
                             {obj.description && <p className="text-sm text-gray-600 mt-1">{obj.description}</p>}
+                            
+                            {/* Success Criteria Display */}
+                            {obj.successCriteria && (
+                              <div className="mt-3 flex items-center gap-2 text-xs">
+                                <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-md px-2 py-1">
+                                  <svg className="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  <span className="font-semibold text-green-700">Target: {obj.successCriteria.targetPercentage}%</span>
+                                </div>
+                                <span className="text-gray-600 line-clamp-1">{obj.successCriteria.description}</span>
+                              </div>
+                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             <select
                               value={obj.status}
                               onChange={(e) => handleUpdateObjectiveStatus(obj.id, e.target.value as ObjectiveStatus)}
-                              className="text-sm border border-gray-300 rounded px-2 py-1"
+                              className="text-sm border border-gray-300 rounded px-3 py-2"
                             >
                               <option value="pending">Pending</option>
                               <option value="in-progress">In Progress</option>
                               <option value="completed">Completed</option>
                               <option value="blocked">Blocked</option>
                             </select>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/pilots/${id}/objectives/${obj.id}`)}
+                            >
+                              Setup
+                            </Button>
                             <button
                               onClick={() => handleDeleteObjective(obj.id)}
-                              className="text-red-600 hover:text-red-700 p-1"
+                              className="text-red-600 hover:text-red-700 p-2"
                             >
                               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
                               </svg>
                             </button>
                           </div>
@@ -626,167 +1008,241 @@ export function PilotDetailsPage() {
                 </motion.div>
               )}
 
-              {activeTab === 'cameras' && (
+              {activeTab === "locations" && (
                 <motion.div
-                  key="cameras"
+                  key="locations"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   className="space-y-6"
                 >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">Cameras ({cameras.length})</h3>
-                    <Button onClick={() => setShowCameraForm(!showCameraForm)}>
-                      {showCameraForm ? 'Cancel' : '+ Add Camera'}
-                    </Button>
-                  </div>
-
-                  {showCameraForm && (
-                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                      <h4 className="font-medium text-gray-900 mb-3">New Camera</h4>
-                      <div className="mb-3">
-                        <Input
-                          label="Camera Name"
-                          placeholder="e.g., Entrance Camera"
-                          value={newCamera.name}
-                          onChange={(e) => setNewCamera({ ...newCamera, name: e.target.value })}
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Comments (Optional)</label>
-                        <textarea
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          rows={2}
-                          placeholder="Add any description or notes about this camera..."
-                          value={newCamera.comments}
-                          onChange={(e) => setNewCamera({ ...newCamera, comments: e.target.value })}
-                        />
-                      </div>
-                      <div className="mt-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                        <select
-                          value={newCamera.status}
-                          onChange={(e) => setNewCamera({ ...newCamera, status: e.target.value as CameraStatus })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="planned">Planned</option>
-                          <option value="installed">Installed</option>
-                          <option value="configured">Configured</option>
-                          <option value="active">Active</option>
-                          <option value="issue">Issue</option>
-                        </select>
-                      </div>
-                      <div className="mt-3 flex gap-2">
-                        <Button onClick={handleCreateCamera}>Add Camera</Button>
-                        <Button variant="secondary" onClick={() => setShowCameraForm(false)}>Cancel</Button>
-                      </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Locations & Cameras</h3>
+                    <div className="text-sm text-gray-600">
+                      {locations.length} location{locations.length !== 1 ? 's' : ''} • {cameras.length} camera{cameras.length !== 1 ? 's' : ''}
                     </div>
-                  )}
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {cameras.map((camera) => (
-                      <div key={camera.id} className="border border-gray-200 rounded-lg p-4 space-y-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <input
-                              type="text"
-                              value={camera.name}
-                              onChange={(e) => handleUpdateCameraName(camera.id, e.target.value)}
-                              className="text-lg font-semibold text-gray-900 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none w-full mb-2"
-                            />
-                            <textarea
-                              value={camera.notes || ''}
-                              onChange={(e) => handleUpdateCameraComments(camera.id, e.target.value)}
-                              placeholder="Add comments or description..."
-                              className="text-sm text-gray-600 bg-transparent border border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none w-full rounded px-2 py-1"
-                              rows={2}
-                            />
-                          </div>
-                          <button
-                            onClick={() => handleDeleteCamera(camera.id)}
-                            className="text-red-600 hover:text-red-700 p-1"
-                          >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                          <select
-                            value={camera.status}
-                            onChange={(e) => handleUpdateCameraStatus(camera.id, e.target.value as CameraStatus)}
-                            className={`text-sm px-3 py-1 rounded border ${getCameraStatusBadgeStyle(camera.status)}`}
-                          >
-                            <option value="planned">Planned</option>
-                            <option value="installed">Installed</option>
-                            <option value="configured">Configured</option>
-                            <option value="active">Active</option>
-                            <option value="issue">Issue</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <label className="text-sm font-medium text-gray-700">
-                              Frames ({camera.frames.length})
-                            </label>
-                            <button
-                              onClick={() => setSelectedCameraForFrames(
-                                selectedCameraForFrames === camera.id ? null : camera.id
-                              )}
-                              className="text-xs text-blue-600 hover:text-blue-700"
-                            >
-                              {selectedCameraForFrames === camera.id ? 'Close' : '+ Add Frames'}
-                            </button>
-                          </div>
-
-                          {selectedCameraForFrames === camera.id && (
-                            <div className="mb-3">
-                              <FileUploadZone
-                                onFilesSelected={(files) => handleAddCameraFrames(camera.id, files)}
-                                accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'] }}
-                                multiple={true}
-                              />
-                            </div>
-                          )}
-
-                          {camera.frames.length > 0 ? (
-                            <div className="grid grid-cols-2 gap-2">
-                              {camera.frames.map((frame) => (
-                                <ImagePreview
-                                  key={frame.id}
-                                  src={frame.fileUrl}
-                                  alt={frame.fileName}
-                                  isPrimary={frame.isPrimary}
-                                  onSetPrimary={() => handleSetPrimaryFrame(camera.id, frame.id)}
-                                  onRemove={() => handleRemoveFrame(camera.id, frame.id)}
-                                />
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-gray-500 italic">No frames uploaded</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
                   </div>
 
-                  {cameras.length === 0 && !showCameraForm && (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <p className="text-gray-500">No cameras added yet</p>
+                  {locations.length === 0 ? (
+                    <div className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-12 text-center">
+                      <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">No Locations Yet</h4>
+                      <p className="text-sm text-gray-600 mb-4">Locations need to be added during pilot creation</p>
+                      <p className="text-xs text-gray-500">Edit pilot details to add locations</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {locations.map((location) => {
+                        const locationCameras = cameras.filter(c => c.locationId === location.id);
+                        
+                        return (
+                          <div key={location.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                            {/* Location Header */}
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                  </div>
+                                  <div>
+                                    <h4 className="text-lg font-bold text-gray-900">{location.name}</h4>
+                                    <p className="text-sm text-gray-600">{location.cityRegion}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                  <div className="text-right">
+                                    <div className="text-2xl font-bold text-blue-600">{locationCameras.length}</div>
+                                    <div className="text-xs text-gray-600">Camera{locationCameras.length !== 1 ? 's' : ''}</div>
+                                  </div>
+                                  <span className={`px-3 py-1 text-xs font-medium rounded-full border ${
+                                    location.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' :
+                                    location.status === 'inactive' ? 'bg-gray-50 text-gray-700 border-gray-200' :
+                                    'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                  }`}>
+                                    {location.status}
+                                  </span>
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => {
+                                      setSelectedLocationId(location.id);
+                                      setShowCameraModal(true);
+                                    }}
+                                  >
+                                    + Add Camera
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Cameras Grid */}
+                            <div className="p-6">
+                              {locationCameras.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                  {locationCameras.map((camera) => (
+                                    <div
+                                      key={camera.id}
+                                      className="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-all shadow-sm hover:shadow-md"
+                                    >
+                                      {/* Camera Header */}
+                                      <div className="flex items-start justify-between mb-3">
+                                        <div className="flex-1 min-w-0">
+                                          <h5 className="text-base font-semibold text-gray-900 truncate">{camera.name}</h5>
+                                          {camera.notes && (
+                                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">{camera.notes}</p>
+                                          )}
+                                        </div>
+                                        <div className="flex gap-1 ml-2">
+                                          <button
+                                            onClick={() => {
+                                              setEditingCameraId(camera.id);
+                                              setSelectedLocationId(camera.locationId);
+                                              setNewCamera({
+                                                name: camera.name,
+                                                comments: camera.notes || "",
+                                                status: camera.status,
+                                                frames: [],
+                                              });
+                                              setShowCameraModal(true);
+                                            }}
+                                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                            title="Edit camera"
+                                          >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                          </button>
+                                          <button
+                                            onClick={() => handleDeleteCamera(camera.id)}
+                                            className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                            title="Delete camera"
+                                          >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      {/* Status Badge */}
+                                      <div className="mb-3">
+                                        <span className={`px-2 py-1 text-xs font-medium rounded border ${getCameraStatusBadgeStyle(camera.status)}`}>
+                                          {camera.status}
+                                        </span>
+                                      </div>
+
+                                      {/* Frames Section */}
+                                      <div>
+                                        <div className="flex items-center justify-between mb-2">
+                                          <span className="text-xs font-medium text-gray-700">
+                                            Frames ({camera.frames.length})
+                                          </span>
+                                          <button
+                                            onClick={() => setSelectedCameraForFrames(selectedCameraForFrames === camera.id ? null : camera.id)}
+                                            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                          >
+                                            {selectedCameraForFrames === camera.id ? "Close" : "+ Add"}
+                                          </button>
+                                        </div>
+
+                                        {selectedCameraForFrames === camera.id && (
+                                          <div className="mb-2">
+                                            <FileUploadZone
+                                              onFilesSelected={(files) => {
+                                                handleAddCameraFrames(camera.id, files);
+                                                setSelectedCameraForFrames(null);
+                                              }}
+                                              accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
+                                              multiple={true}
+                                              maxSize={10 * 1024 * 1024}
+                                            >
+                                              <div className="space-y-1">
+                                                <div className="text-xl">📸</div>
+                                                <p className="text-[10px] text-gray-700 font-medium">Upload frames</p>
+                                                <p className="text-[9px] text-gray-500">Drag & drop or click</p>
+                                              </div>
+                                            </FileUploadZone>
+                                          </div>
+                                        )}
+
+                                        {camera.frames.length > 0 ? (
+                                          <div className="grid grid-cols-3 gap-1.5">
+                                            {camera.frames.slice(0, 6).map((frame) => (
+                                              <div key={frame.id} className="relative group">
+                                                <img
+                                                  src={frame.fileUrl}
+                                                  alt={frame.fileName}
+                                                  className="w-full h-16 object-cover rounded border border-gray-200"
+                                                />
+                                                {frame.isPrimary && (
+                                                  <div className="absolute top-0.5 left-0.5 bg-blue-600 text-white text-[10px] px-1 py-0.5 rounded">
+                                                    Primary
+                                                  </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                                                  {!frame.isPrimary && (
+                                                    <button
+                                                      onClick={() => handleSetPrimaryFrame(camera.id, frame.id)}
+                                                      className="p-1 bg-white rounded text-blue-600 hover:bg-blue-50"
+                                                      title="Set as primary"
+                                                    >
+                                                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                      </svg>
+                                                    </button>
+                                                  )}
+                                                  <button
+                                                    onClick={() => handleRemoveFrame(camera.id, frame.id)}
+                                                    className="p-1 bg-white rounded text-red-600 hover:bg-red-50"
+                                                    title="Remove frame"
+                                                  >
+                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <p className="text-xs text-gray-500 italic">No frames</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                  <svg className="w-10 h-10 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                  <p className="text-sm text-gray-600 font-medium">No cameras at this location</p>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedLocationId(location.id);
+                                      setShowCameraModal(true);
+                                    }}
+                                    className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                                  >
+                                    + Add Your First Camera
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </motion.div>
               )}
 
-              {activeTab === 'assets' && (
+              {activeTab === "assets" && (
                 <motion.div
                   key="assets"
                   initial={{ opacity: 0, y: 10 }}
@@ -796,81 +1252,15 @@ export function PilotDetailsPage() {
                 >
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-gray-900">Assets ({assets.length})</h3>
-                    <Button onClick={() => setShowAssetForm(!showAssetForm)}>
-                      {showAssetForm ? 'Cancel' : '+ Upload Assets'}
-                    </Button>
+                    <Button onClick={() => setShowAssetModal(true)}>+ Upload Assets</Button>
                   </div>
-
-                  {showAssetForm && (
-                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 space-y-4">
-                      <h4 className="font-medium text-gray-900">Upload Assets</h4>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                        <select
-                          value={newAsset.category}
-                          onChange={(e) => setNewAsset({ ...newAsset, category: e.target.value as AssetCategory })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="contract">Contract</option>
-                          <option value="diagram">Diagram</option>
-                          <option value="photo">Photo</option>
-                          <option value="report">Report</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
-                        <Input
-                          placeholder="Brief description..."
-                          value={newAsset.description}
-                          onChange={(e) => setNewAsset({ ...newAsset, description: e.target.value })}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Remarks (Optional)</label>
-                        <textarea
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          rows={2}
-                          placeholder="Additional notes..."
-                          value={newAsset.remarks}
-                          onChange={(e) => setNewAsset({ ...newAsset, remarks: e.target.value })}
-                        />
-                      </div>
-
-                      <FileUploadZone
-                        onFilesSelected={handleUploadAssets}
-                        accept={{
-                          'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
-                          'application/pdf': ['.pdf'],
-                          'application/msword': ['.doc', '.docx'],
-                          'application/vnd.ms-excel': ['.xls', '.xlsx'],
-                          'text/*': ['.txt', '.csv'],
-                        }}
-                        multiple={true}
-                        maxSize={50 * 1024 * 1024}
-                      >
-                        <div className="space-y-2">
-                          <div className="text-4xl">📎</div>
-                          <p className="text-gray-700 font-medium">
-                            Drag & drop files here, or click to select
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Multiple files supported • Max 50MB per file
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            Supports: Images, PDFs, Documents, Spreadsheets
-                          </p>
-                        </div>
-                      </FileUploadZone>
-                    </div>
-                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {assets.map((asset) => (
-                      <div key={asset.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                      <div
+                        key={asset.id}
+                        className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                      >
                         <div className="flex items-start justify-between mb-3">
                           <span className={`text-xs px-2 py-1 rounded border ${getAssetCategoryColor(asset.category)}`}>
                             {getAssetCategoryIcon(asset.category)} {asset.category}
@@ -880,12 +1270,17 @@ export function PilotDetailsPage() {
                             className="text-red-600 hover:text-red-700 p-1"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
                             </svg>
                           </button>
                         </div>
 
-                        {asset.fileType.startsWith('image/') && (
+                        {asset.fileType.startsWith("image/") && (
                           <img
                             src={asset.fileUrl}
                             alt={asset.fileName}
@@ -896,25 +1291,24 @@ export function PilotDetailsPage() {
                         <h4 className="font-medium text-gray-900 text-sm mb-1 truncate" title={asset.fileName}>
                           {asset.fileName}
                         </h4>
-                        
-                        {asset.description && (
-                          <p className="text-xs text-gray-600 mb-2">{asset.description}</p>
-                        )}
-                        
-                        {asset.remarks && (
-                          <p className="text-xs text-gray-500 italic mb-2">"{asset.remarks}"</p>
-                        )}
+
+                        {asset.description && <p className="text-xs text-gray-600 mb-2">{asset.description}</p>}
+
+                        {asset.remarks && <p className="text-xs text-gray-500 italic mb-2">"{asset.remarks}"</p>}
 
                         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
-                          <span className="text-xs text-gray-500">
-                            {(asset.fileSize / 1024).toFixed(1)} KB
-                          </span>
+                          <span className="text-xs text-gray-500">{(asset.fileSize / 1024).toFixed(1)} KB</span>
                           <button
                             onClick={() => handleDownloadAsset(asset)}
                             className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                              />
                             </svg>
                             Download
                           </button>
@@ -923,11 +1317,16 @@ export function PilotDetailsPage() {
                     ))}
                   </div>
 
-                  {assets.length === 0 && !showAssetForm && (
+                  {assets.length === 0 && (
                     <div className="text-center py-12">
                       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                          />
                         </svg>
                       </div>
                       <p className="text-gray-500">No assets uploaded yet</p>
@@ -936,7 +1335,7 @@ export function PilotDetailsPage() {
                 </motion.div>
               )}
 
-              {activeTab === 'activity' && (
+              {activeTab === "activity" && (
                 <motion.div
                   key="activity"
                   initial={{ opacity: 0, y: 10 }}
@@ -944,25 +1343,25 @@ export function PilotDetailsPage() {
                   exit={{ opacity: 0, y: -10 }}
                   className="space-y-4"
                 >
-                  {remarks.filter(r => r.isSystem).map((remark) => {
-                    const user = users.find(u => u.email === remark.createdBy);
-                    const userName = user ? user.name : remark.createdBy;
-                    
-                    return (
-                      <div key={remark.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                        <span className="text-xl">{getRemarkTypeIcon(remark.type)}</span>
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-900">
-                            <span className="font-medium text-blue-600">{userName}</span> {remark.text}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {new Date(remark.createdAt).toLocaleString()}
-                          </p>
+                  {remarks
+                    .filter((r) => r.isSystem)
+                    .map((remark) => {
+                      const user = users.find((u) => u.email === remark.createdBy);
+                      const userName = user ? user.name : remark.createdBy;
+
+                      return (
+                        <div key={remark.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                          <span className="text-xl">{getRemarkTypeIcon(remark.type)}</span>
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-900">
+                              <span className="font-medium text-blue-600">{userName}</span> {remark.text}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">{new Date(remark.createdAt).toLocaleString()}</p>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                  {remarks.filter(r => r.isSystem).length === 0 && (
+                      );
+                    })}
+                  {remarks.filter((r) => r.isSystem).length === 0 && (
                     <div className="text-center py-12">
                       <p className="text-gray-500">No activity yet</p>
                     </div>
@@ -973,6 +1372,500 @@ export function PilotDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Objective Modal */}
+      {showObjectiveModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Add New Objective</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowObjectiveModal(false);
+                  setNewObjective({ title: "", description: "", priority: "medium" });
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <Input
+                label="Title"
+                placeholder="e.g., Wait time reduction"
+                value={newObjective.title}
+                onChange={(e) => setNewObjective({ ...newObjective, title: e.target.value })}
+                required
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                <select
+                  value={newObjective.priority}
+                  onChange={(e) => setNewObjective({ ...newObjective, priority: e.target.value as ObjectivePriority })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
+                <textarea
+                  placeholder="Add details about this objective..."
+                  value={newObjective.description}
+                  onChange={(e) => setNewObjective({ ...newObjective, description: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowObjectiveModal(false);
+                  setNewObjective({ title: "", description: "", priority: "medium" });
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleCreateObjective}>Add Objective</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Camera Modal */}
+      {showCameraModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">{editingCameraId ? "Edit Camera" : "Add New Camera"}</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCameraModal(false);
+                  setEditingCameraId(null);
+                  setNewCamera({ name: "", comments: "", status: "planned", frames: [] });
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              <Input
+                label="Camera Name"
+                placeholder="e.g., Entrance Camera, Footfall Counting"
+                value={newCamera.name}
+                onChange={(e) => setNewCamera({ ...newCamera, name: e.target.value })}
+                required
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select
+                  value={newCamera.status}
+                  onChange={(e) => setNewCamera({ ...newCamera, status: e.target.value as CameraStatus })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="planned">Planned</option>
+                  <option value="installed">Installed</option>
+                  <option value="configured">Configured</option>
+                  <option value="active">Active</option>
+                  <option value="issue">Issue</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Comments (Optional)</label>
+                <textarea
+                  placeholder="Add any description or notes about this camera..."
+                  value={newCamera.comments}
+                  onChange={(e) => setNewCamera({ ...newCamera, comments: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              {!editingCameraId && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Upload Frames (Optional)</label>
+                  <FileUploadZone
+                    onFilesSelected={(files) => {
+                      setNewCamera({ ...newCamera, frames: files });
+                      toast.success(`${files.length} frame(s) selected`);
+                    }}
+                    accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
+                    multiple={true}
+                    maxSize={10 * 1024 * 1024}
+                  >
+                    <div className="space-y-2">
+                      <div className="text-4xl">📸</div>
+                      <p className="text-gray-700 font-medium">Upload camera frames</p>
+                      <p className="text-sm text-gray-500">Multiple files supported • Max 10MB per file</p>
+                      <p className="text-xs text-gray-400">Drag & drop or click to select</p>
+                    </div>
+                  </FileUploadZone>
+                  {newCamera.frames.length > 0 && (
+                    <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-sm text-blue-700 font-medium">
+                        ✓ {newCamera.frames.length} frame(s) ready to upload
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setNewCamera({ ...newCamera, frames: [] })}
+                        className="text-xs text-blue-600 hover:text-blue-700 mt-1"
+                      >
+                        Clear selection
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowCameraModal(false);
+                  setEditingCameraId(null);
+                  setNewCamera({ name: "", comments: "", status: "planned", frames: [] });
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={editingCameraId ? handleUpdateCamera : handleCreateCamera}>
+                {editingCameraId ? "Update Camera" : "Add Camera"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Asset Modal */}
+      {showAssetModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Upload Assets</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAssetModal(false);
+                  setNewAsset({ title: "", category: "other", description: "", remarks: "" });
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <Input
+                label="Title"
+                placeholder="Asset title"
+                value={newAsset.title}
+                onChange={(e) => setNewAsset({ ...newAsset, title: e.target.value })}
+                required
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <select
+                  value={newAsset.category}
+                  onChange={(e) => setNewAsset({ ...newAsset, category: e.target.value as AssetCategory })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="contract">📄 Contract</option>
+                  <option value="diagram">📊 Diagram</option>
+                  <option value="photo">📷 Photo</option>
+                  <option value="report">📈 Report</option>
+                  <option value="other">📎 Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
+                <Input
+                  placeholder="Brief description..."
+                  value={newAsset.description}
+                  onChange={(e) => setNewAsset({ ...newAsset, description: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Remarks (Optional)</label>
+                <textarea
+                  placeholder="Additional notes..."
+                  value={newAsset.remarks}
+                  onChange={(e) => setNewAsset({ ...newAsset, remarks: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              <FileUploadZone
+                onFilesSelected={async (files) => {
+                  if (!pilot?.id || !authState.user || files.length === 0) return;
+
+                  const file = files[0];
+                  try {
+                    const reader = new FileReader();
+                    reader.onloadend = async () => {
+                      const base64String = reader.result as string;
+
+                      const asset = await createAsset({
+                        pilotId: pilot.id,
+                        title: newAsset.title || file.name,
+                        fileName: file.name,
+                        fileType: file.type,
+                        fileSize: file.size,
+                        fileUrl: base64String,
+                        category: newAsset.category,
+                        description: newAsset.description,
+                        remarks: newAsset.remarks,
+                        uploadedBy: authState.user!.email,
+                      });
+
+                      setAssets([...assets, asset]);
+                      toast.success("Asset uploaded successfully");
+                      setShowAssetModal(false);
+                      setNewAsset({ title: "", category: "other", description: "", remarks: "" });
+                    };
+                    reader.readAsDataURL(file);
+                  } catch (error) {
+                    console.error("Error uploading asset:", error);
+                    toast.error("Failed to upload asset");
+                  }
+                }}
+                accept={{
+                  "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"],
+                  "application/pdf": [".pdf"],
+                  "application/msword": [".doc", ".docx"],
+                  "application/vnd.ms-excel": [".xls", ".xlsx"],
+                  "text/*": [".txt", ".csv"],
+                }}
+                multiple={false}
+                maxSize={50 * 1024 * 1024}
+              >
+                <div className="space-y-2">
+                  <div className="text-4xl">📎</div>
+                  <p className="text-gray-700 font-medium">Drag & drop file here, or click to select</p>
+                  <p className="text-sm text-gray-500">Max 50MB per file</p>
+                  <p className="text-xs text-gray-400">Supports: Images, PDFs, Documents, Spreadsheets</p>
+                </div>
+              </FileUploadZone>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAssetModal(false);
+                  setNewAsset({ title: "", category: "other", description: "", remarks: "" });
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Summary Modal */}
+      {showSummaryModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">AI-Generated Summary</h2>
+                  <p className="text-xs text-gray-500">Pilot overview and activity analysis</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSummaryModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Executive Summary */}
+              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-6 border border-purple-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">📊 Executive Summary</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  The <strong>{pilot?.name}</strong> pilot is currently in <strong>{pilot?.status}</strong> status with{" "}
+                  <strong>{objectives.length}</strong> objectives defined. The project shows promising progress with{" "}
+                  {cameras.length} cameras deployed across {pilot?.locationName}. The team has uploaded {assets.length}{" "}
+                  assets and maintained active collaboration through {remarks.length} activity entries. Overall progress
+                  stands at <strong>{progress}%</strong> completion.
+                </p>
+              </div>
+
+              {/* Key Metrics */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">📈 Key Metrics</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <div className="text-2xl font-bold text-blue-600">{objectives.length}</div>
+                    <div className="text-sm text-gray-600">Objectives</div>
+                    <div className="text-xs text-gray-500 mt-1">2 in progress</div>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                    <div className="text-2xl font-bold text-purple-600">{cameras.length}</div>
+                    <div className="text-sm text-gray-600">Cameras</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {cameras.filter((c) => c.status === "active").length} active
+                    </div>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                    <div className="text-2xl font-bold text-green-600">{assets.length}</div>
+                    <div className="text-sm text-gray-600">Assets</div>
+                    <div className="text-xs text-gray-500 mt-1">Documents & media</div>
+                  </div>
+                  <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                    <div className="text-2xl font-bold text-orange-600">{assignedUsers.length}</div>
+                    <div className="text-sm text-gray-600">Team Members</div>
+                    <div className="text-xs text-gray-500 mt-1">Actively involved</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Activity Timeline */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">⏱️ Activity Timeline</h3>
+                <div className="space-y-3">
+                  <div className="flex gap-4 pb-3 border-b border-gray-200">
+                    <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-semibold text-gray-900">Pilot Created</span>
+                        <span className="text-xs text-gray-500">2 days ago</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Initial pilot setup completed with basic configuration</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 pb-3 border-b border-gray-200">
+                    <div className="flex-shrink-0 w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-semibold text-gray-900">Cameras Added</span>
+                        <span className="text-xs text-gray-500">1 day ago</span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {cameras.length} camera(s) configured with frames uploaded
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 pb-3 border-b border-gray-200">
+                    <div className="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-semibold text-gray-900">Objectives Defined</span>
+                        <span className="text-xs text-gray-500">18 hours ago</span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Team established {objectives.length} key objective(s) for tracking
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 pb-3 border-b border-gray-200">
+                    <div className="flex-shrink-0 w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-semibold text-gray-900">Assets Uploaded</span>
+                        <span className="text-xs text-gray-500">12 hours ago</span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {assets.length} asset(s) added including contracts, diagrams, and photos
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-2 h-2 bg-pink-500 rounded-full mt-2"></div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-semibold text-gray-900">Team Collaboration</span>
+                        <span className="text-xs text-gray-500">6 hours ago</span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Active discussions and updates with {assignedUsers.length} team member(s)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recommendations */}
+              <div className="bg-yellow-50 rounded-lg p-6 border border-yellow-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">💡 AI Recommendations</h3>
+                <ul className="space-y-2 text-sm text-gray-700">
+                  <li className="flex items-start gap-2">
+                    <span className="text-yellow-600 mt-0.5">•</span>
+                    <span>Complete ROI configuration for all camera frames to maximize analytics accuracy</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-yellow-600 mt-0.5">•</span>
+                    <span>Update objective status regularly to maintain accurate progress tracking</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-yellow-600 mt-0.5">•</span>
+                    <span>Schedule regular team syncs to align on priorities and blockers</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-yellow-600 mt-0.5">•</span>
+                    <span>Consider adding more documentation assets for better stakeholder visibility</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
+              <button
+                onClick={() => setShowSummaryModal(false)}
+                className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

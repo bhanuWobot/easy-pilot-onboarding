@@ -3,13 +3,14 @@
  * Always collapsed with icon-only display and hover tooltips
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ReactElement } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '../../contexts/AuthContext';
 import { clearAuthData } from '../../utils/auth';
+import { getUnreadAlertsCount } from '../../utils/alertDb';
 import toast from 'react-hot-toast';
 
 interface NavItem {
@@ -71,27 +72,27 @@ const navItems: NavItem[] = [
     ),
     path: '/customers',
   },
-  {
-    id: 'assets',
-    label: 'Assets',
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-      </svg>
-    ),
-    path: '/assets',
-  },
-  {
-    id: 'settings',
-    label: 'Settings',
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-    path: '/settings',
-  },
+  // {
+  //   id: 'assets',
+  //   label: 'Assets',
+  //   icon: (
+  //     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  //       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+  //     </svg>
+  //   ),
+  //   path: '/assets',
+  // },
+  // {
+  //   id: 'settings',
+  //   label: 'Settings',
+  //   icon: (
+  //     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  //       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+  //       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+  //     </svg>
+  //   ),
+  //   path: '/settings',
+  // },
   {
     id: 'logout',
     label: 'Logout',
@@ -107,9 +108,34 @@ const navItems: NavItem[] = [
 
 export function Sidebar() {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
   const { dispatch } = useAuth();
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    const fetchCount = async () => {
+      try {
+        const count = await getUnreadAlertsCount();
+        if (isMounted) {
+          setUnreadCount(count);
+        }
+      } catch (error) {
+        console.error('Error loading unread count:', error);
+      }
+    };
+    
+    fetchCount();
+    // Refresh count every 30 seconds
+    const interval = setInterval(fetchCount, 30000);
+    
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   const handleLogout = () => {
     clearAuthData();
@@ -135,21 +161,18 @@ export function Sidebar() {
 
       {/* Navigation Items */}
       <nav className="flex-1 py-6">
-        <ul className="space-y-2">
+        <ul className="space-y-2 px-3">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
-            
+
             return (
-              <li key={item.id} className="relative px-3">
+              <li key={item.id} className="relative">
                 {item.isAction ? (
                   <button
                     onClick={() => handleNavClick(item)}
                     onMouseEnter={() => setHoveredItem(item.id)}
                     onMouseLeave={() => setHoveredItem(null)}
-                    className={clsx(
-                      'w-full h-14 flex items-center justify-center rounded-xl transition-all duration-200',
-                      'hover:bg-red-50 text-gray-600 hover:text-red-600'
-                    )}
+                    className="w-full h-14 flex items-center justify-center rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   >
                     {item.icon}
                   </button>
@@ -159,13 +182,23 @@ export function Sidebar() {
                     onMouseEnter={() => setHoveredItem(item.id)}
                     onMouseLeave={() => setHoveredItem(null)}
                     className={clsx(
-                      'block h-14 flex items-center justify-center rounded-xl transition-all duration-200',
+                      'block h-14 flex items-center justify-center rounded-xl transition-all duration-200 relative',
                       isActive
                         ? 'bg-blue-50 text-blue-600'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     )}
                   >
                     {item.icon}
+                    {/* Unread badge for alerts */}
+                    {item.id === 'alerts' && unreadCount > 0 && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute top-2 right-2 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center"
+                      >
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </motion.span>
+                    )}
                   </Link>
                 )}
 

@@ -87,13 +87,13 @@ async function loadDatabase(): Promise<DatabaseSchema> {
 }
 
 /**
- * Save database to localStorage (simulating file write)
+ * Save database to sessionStorage (simulating file write)
  * In a real backend, this would write to the file system or database
  */
 function saveDatabase(db: DatabaseSchema): void {
   try {
-    localStorage.setItem('pilots_db', JSON.stringify(db));
-    console.log('Database saved to localStorage');
+    sessionStorage.setItem('pilots_db', JSON.stringify(db));
+    console.log('✅ Pilots database saved to session storage');
   } catch (error) {
     console.error('Error saving database:', error);
     throw new Error('Failed to save database');
@@ -101,11 +101,11 @@ function saveDatabase(db: DatabaseSchema): void {
 }
 
 /**
- * Load database from localStorage or fetch from file
+ * Load database from sessionStorage or fetch from file
  */
 async function getDatabase(): Promise<DatabaseSchema> {
-  // Try localStorage first (for persistence across sessions)
-  const cached = localStorage.getItem('pilots_db');
+  // Try sessionStorage first (for persistence within current session)
+  const cached = sessionStorage.getItem('pilots_db');
   if (cached) {
     try {
       return JSON.parse(cached);
@@ -156,6 +156,8 @@ export async function createPilot(
     const newPilot: PilotRecord = {
       ...pilotData,
       customerId,
+      locationIds: pilotData.locationIds || [], // Ensure locationIds is always an array
+      assetIds: pilotData.assetIds || [], // Ensure assetIds is always an array
       id: nanoid(10),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

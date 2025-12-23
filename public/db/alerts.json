@@ -1,0 +1,367 @@
+{
+  "alerts": [
+    {
+      "id": "alert00001",
+      "type": "pilot_created",
+      "priority": "medium",
+      "title": "New Pilot Created",
+      "message": "Smart Franchise - Multi-Location Deployment pilot has been created and assigned to your team",
+      "pilotId": "pilot00001",
+      "pilotName": "Smart Franchise - Multi-Location Deployment",
+      "relatedTo": {
+        "type": "pilot",
+        "id": "pilot00001",
+        "name": "Smart Franchise - Multi-Location Deployment"
+      },
+      "isRead": true,
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-11-01T10:00:00.000Z",
+      "readAt": "2025-11-01T14:30:00.000Z",
+      "comments": [
+        {
+          "id": "comment001",
+          "alertId": "alert00001",
+          "text": "Team meeting scheduled for Nov 3rd to discuss deployment timeline",
+          "createdBy": "john@wobot.ai",
+          "createdAt": "2025-11-01T15:20:00.000Z",
+          "isEdited": false
+        },
+        {
+          "id": "comment002",
+          "alertId": "alert00001",
+          "text": "Graham confirmed availability for the kickoff call",
+          "createdBy": "gstaniforth@smartfranchise.ai",
+          "createdAt": "2025-11-02T09:15:00.000Z",
+          "isEdited": false
+        }
+      ]
+    },
+    {
+      "id": "alert00002",
+      "type": "objective_completed",
+      "priority": "low",
+      "title": "Objective Completed",
+      "message": "Network Infrastructure Setup completed ahead of schedule for Smart Franchise pilot",
+      "pilotId": "pilot00001",
+      "pilotName": "Smart Franchise - Multi-Location Deployment",
+      "relatedTo": {
+        "type": "objective",
+        "id": "obj0000001",
+        "name": "Complete Network Infrastructure Setup"
+      },
+      "isRead": true,
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-11-08T16:30:00.000Z",
+      "readAt": "2025-11-08T17:00:00.000Z",
+      "comments": []
+    },
+    {
+      "id": "alert00003",
+      "type": "camera_added",
+      "priority": "medium",
+      "title": "Camera Installed",
+      "message": "Main Entrance Camera successfully installed at Austin Main Office",
+      "pilotId": "pilot00001",
+      "pilotName": "Smart Franchise - Multi-Location Deployment",
+      "relatedTo": {
+        "type": "camera",
+        "id": "cam0000001",
+        "name": "Main Entrance Camera"
+      },
+      "isRead": true,
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-11-01T10:30:00.000Z",
+      "readAt": "2025-11-01T11:00:00.000Z",
+      "comments": []
+    },
+    {
+      "id": "alert00004",
+      "type": "asset_uploaded",
+      "priority": "high",
+      "title": "Contract Uploaded",
+      "message": "Service Agreement has been uploaded and requires review",
+      "pilotId": "pilot00001",
+      "pilotName": "Smart Franchise - Multi-Location Deployment",
+      "relatedTo": {
+        "type": "asset",
+        "id": "asset00001",
+        "name": "Service Agreement"
+      },
+      "isRead": true,
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-11-01T10:45:00.000Z",
+      "readAt": "2025-11-01T11:30:00.000Z",
+      "comments": [
+        {
+          "id": "comment003",
+          "alertId": "alert00004",
+          "text": "Contract reviewed and approved by legal team",
+          "createdBy": "sarah.johnson@wobot.ai",
+          "createdAt": "2025-11-01T16:45:00.000Z",
+          "isEdited": false
+        }
+      ]
+    },
+    {
+      "id": "alert00005",
+      "type": "deadline_approaching",
+      "priority": "high",
+      "title": "Deadline Approaching",
+      "message": "VMS Configuration objective due in 3 days for Smart Franchise pilot",
+      "pilotId": "pilot00001",
+      "pilotName": "Smart Franchise - Multi-Location Deployment",
+      "relatedTo": {
+        "type": "objective",
+        "id": "obj0000003",
+        "name": "Configure Video Management System"
+      },
+      "isRead": false,
+      "createdBy": "system",
+      "createdAt": "2025-12-12T09:00:00.000Z",
+      "comments": []
+    },
+    {
+      "id": "alert00006",
+      "type": "camera_issue",
+      "priority": "critical",
+      "title": "Camera Connectivity Issue",
+      "message": "Warehouse Loading Dock camera experiencing intermittent connection issues",
+      "pilotId": "pilot00001",
+      "pilotName": "Smart Franchise - Multi-Location Deployment",
+      "relatedTo": {
+        "type": "camera",
+        "id": "cam0000003",
+        "name": "Warehouse Loading Dock"
+      },
+      "isRead": false,
+      "createdBy": "system",
+      "createdAt": "2025-12-20T08:30:00.000Z",
+      "comments": [
+        {
+          "id": "comment004",
+          "alertId": "alert00006",
+          "text": "Network team investigating the issue. Suspected PoE switch problem.",
+          "createdBy": "john@wobot.ai",
+          "createdAt": "2025-12-20T09:15:00.000Z",
+          "isEdited": false
+        },
+        {
+          "id": "comment005",
+          "alertId": "alert00006",
+          "text": "PoE switch replaced. Monitoring stability over next 24 hours.",
+          "createdBy": "john@wobot.ai",
+          "createdAt": "2025-12-20T14:30:00.000Z",
+          "isEdited": false
+        }
+      ]
+    },
+    {
+      "id": "alert00007",
+      "type": "pilot_status_change",
+      "priority": "medium",
+      "title": "Pilot Status Updated",
+      "message": "Acme Corp - Retail Security Suite status changed to Active",
+      "pilotId": "pilot00002",
+      "pilotName": "Acme Corp - Retail Security Suite",
+      "relatedTo": {
+        "type": "pilot",
+        "id": "pilot00002",
+        "name": "Acme Corp - Retail Security Suite"
+      },
+      "isRead": true,
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-11-05T17:00:00.000Z",
+      "readAt": "2025-11-05T17:15:00.000Z",
+      "comments": []
+    },
+    {
+      "id": "alert00008",
+      "type": "user_assigned",
+      "priority": "medium",
+      "title": "User Assignment",
+      "message": "Sarah Johnson has been assigned to Acme Corp pilot",
+      "pilotId": "pilot00002",
+      "pilotName": "Acme Corp - Retail Security Suite",
+      "relatedTo": {
+        "type": "user",
+        "id": "3",
+        "name": "Sarah Johnson"
+      },
+      "isRead": true,
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-10-15T10:00:00.000Z",
+      "readAt": "2025-10-15T10:30:00.000Z",
+      "comments": []
+    },
+    {
+      "id": "alert00009",
+      "type": "objective_blocked",
+      "priority": "critical",
+      "title": "Objective Blocked",
+      "message": "POS Integration objective is blocked due to API access issues",
+      "pilotId": "pilot00002",
+      "pilotName": "Acme Corp - Retail Security Suite",
+      "relatedTo": {
+        "type": "objective",
+        "id": "obj0000007",
+        "name": "POS Integration"
+      },
+      "isRead": false,
+      "createdBy": "sarah.johnson@wobot.ai",
+      "createdAt": "2025-12-18T13:20:00.000Z",
+      "comments": [
+        {
+          "id": "comment006",
+          "alertId": "alert00009",
+          "text": "Contacted client's IT team. Waiting for API credentials.",
+          "createdBy": "sarah.johnson@wobot.ai",
+          "createdAt": "2025-12-18T14:00:00.000Z",
+          "isEdited": false
+        },
+        {
+          "id": "comment007",
+          "alertId": "alert00009",
+          "text": "IT team confirmed API access will be provided by Dec 22",
+          "createdBy": "sarah.johnson@wobot.ai",
+          "createdAt": "2025-12-19T10:30:00.000Z",
+          "isEdited": false
+        }
+      ]
+    },
+    {
+      "id": "alert00010",
+      "type": "asset_uploaded",
+      "priority": "medium",
+      "title": "Analytics Report Available",
+      "message": "November analytics report uploaded for Acme Corp pilot",
+      "pilotId": "pilot00002",
+      "pilotName": "Acme Corp - Retail Security Suite",
+      "relatedTo": {
+        "type": "asset",
+        "id": "asset00005",
+        "name": "Monthly Analytics Report - November"
+      },
+      "isRead": true,
+      "createdBy": "sarah.johnson@wobot.ai",
+      "createdAt": "2025-12-01T09:00:00.000Z",
+      "readAt": "2025-12-01T11:00:00.000Z",
+      "comments": [
+        {
+          "id": "comment008",
+          "alertId": "alert00010",
+          "text": "Great insights! Foot traffic detection accuracy improved by 15%",
+          "createdBy": "john@wobot.ai",
+          "createdAt": "2025-12-01T11:30:00.000Z",
+          "isEdited": false
+        }
+      ]
+    },
+    {
+      "id": "alert00011",
+      "type": "deadline_approaching",
+      "priority": "high",
+      "title": "Permit Deadline",
+      "message": "Building permit approval needed within 3 days for TechStart pilot to proceed",
+      "pilotId": "pilot00003",
+      "pilotName": "TechStart - Smart Office Setup",
+      "relatedTo": {
+        "type": "objective",
+        "id": "obj0000008",
+        "name": "Obtain Building Permits"
+      },
+      "isRead": false,
+      "createdBy": "system",
+      "createdAt": "2025-12-17T09:00:00.000Z",
+      "comments": []
+    },
+    {
+      "id": "alert00012",
+      "type": "camera_added",
+      "priority": "low",
+      "title": "Safety Camera Online",
+      "message": "Main Play Area camera successfully configured for Altitude Trampoline Park",
+      "pilotId": "pilot00004",
+      "pilotName": "Altitude Trampoline Park - Safety Monitoring",
+      "relatedTo": {
+        "type": "camera",
+        "id": "cam0000008",
+        "name": "Main Play Area"
+      },
+      "isRead": true,
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-11-20T09:00:00.000Z",
+      "readAt": "2025-11-20T10:00:00.000Z",
+      "comments": []
+    },
+    {
+      "id": "alert00013",
+      "type": "objective_completed",
+      "priority": "medium",
+      "title": "Safety System Live",
+      "message": "Safety Zone Monitoring Setup completed with 94% detection accuracy",
+      "pilotId": "pilot00004",
+      "pilotName": "Altitude Trampoline Park - Safety Monitoring",
+      "relatedTo": {
+        "type": "objective",
+        "id": "obj0000010",
+        "name": "Safety Zone Monitoring Setup"
+      },
+      "isRead": false,
+      "createdBy": "sarah.johnson@wobot.ai",
+      "createdAt": "2025-12-22T15:30:00.000Z",
+      "comments": [
+        {
+          "id": "comment009",
+          "alertId": "alert00013",
+          "text": "Excellent work! Client is very satisfied with the detection accuracy.",
+          "createdBy": "john@wobot.ai",
+          "createdAt": "2025-12-22T16:00:00.000Z",
+          "isEdited": false
+        }
+      ]
+    },
+    {
+      "id": "alert00014",
+      "type": "system_update",
+      "priority": "low",
+      "title": "System Maintenance",
+      "message": "Scheduled maintenance window on Dec 25, 2025 from 2:00 AM - 4:00 AM PST",
+      "isRead": false,
+      "createdBy": "system",
+      "createdAt": "2025-12-23T08:00:00.000Z",
+      "comments": []
+    },
+    {
+      "id": "alert00015",
+      "type": "objective_blocked",
+      "priority": "high",
+      "title": "Integration Blocked",
+      "message": "Mobile App Integration blocked pending vendor API access",
+      "pilotId": "pilot00004",
+      "pilotName": "Altitude Trampoline Park - Safety Monitoring",
+      "relatedTo": {
+        "type": "objective",
+        "id": "obj0000012",
+        "name": "Mobile App Integration"
+      },
+      "isRead": false,
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-12-20T11:00:00.000Z",
+      "comments": [
+        {
+          "id": "comment010",
+          "alertId": "alert00015",
+          "text": "Escalated to vendor account manager. Expecting resolution by Dec 28.",
+          "createdBy": "john@wobot.ai",
+          "createdAt": "2025-12-20T15:00:00.000Z",
+          "isEdited": false
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-12-23T09:30:00.000Z",
+    "totalAlerts": 15
+  }
+}

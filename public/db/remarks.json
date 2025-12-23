@@ -1,0 +1,267 @@
+{
+  "remarks": [
+    {
+      "id": "rem0000001",
+      "pilotId": "pilot00001",
+      "text": "Pilot created and initial planning phase started",
+      "type": "activity",
+      "isSystem": true,
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-11-01T10:00:00.000Z",
+      "updatedAt": "2025-11-01T10:00:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000002",
+      "pilotId": "pilot00001",
+      "text": "Network infrastructure objective completed ahead of schedule",
+      "type": "update",
+      "isSystem": true,
+      "relatedTo": {
+        "type": "objective",
+        "id": "obj0000001",
+        "name": "Complete Network Infrastructure Setup"
+      },
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-11-08T16:30:00.000Z",
+      "updatedAt": "2025-11-08T16:30:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000003",
+      "pilotId": "pilot00001",
+      "text": "Service agreement uploaded and signed by both parties",
+      "type": "activity",
+      "isSystem": true,
+      "relatedTo": {
+        "type": "asset",
+        "id": "asset00001",
+        "name": "Service Agreement"
+      },
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-11-01T10:45:00.000Z",
+      "updatedAt": "2025-11-01T10:45:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000004",
+      "pilotId": "pilot00001",
+      "text": "All cameras successfully installed and powered on. Conducting initial testing.",
+      "type": "note",
+      "isSystem": false,
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-11-18T14:20:00.000Z",
+      "updatedAt": "2025-11-18T14:20:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000005",
+      "pilotId": "pilot00001",
+      "text": "VMS configuration at 75%. Expected completion by Dec 15.",
+      "type": "update",
+      "isSystem": false,
+      "relatedTo": {
+        "type": "objective",
+        "id": "obj0000003",
+        "name": "Configure Video Management System"
+      },
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-12-20T14:30:00.000Z",
+      "updatedAt": "2025-12-20T14:30:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000006",
+      "pilotId": "pilot00002",
+      "text": "Pilot initiated for Acme Corporation retail security deployment",
+      "type": "activity",
+      "isSystem": true,
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-10-15T09:15:00.000Z",
+      "updatedAt": "2025-10-15T09:15:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000007",
+      "pilotId": "pilot00002",
+      "text": "Site survey completed for all three locations. Detailed camera placement plan finalized.",
+      "type": "update",
+      "isSystem": false,
+      "relatedTo": {
+        "type": "objective",
+        "id": "obj0000005",
+        "name": "Site Survey and Planning"
+      },
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-10-23T11:45:00.000Z",
+      "updatedAt": "2025-10-23T11:45:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000008",
+      "pilotId": "pilot00002",
+      "text": "Installation certificate uploaded after successful deployment",
+      "type": "activity",
+      "isSystem": true,
+      "relatedTo": {
+        "type": "asset",
+        "id": "asset00004",
+        "name": "Installation Certificate"
+      },
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-11-05T16:45:00.000Z",
+      "updatedAt": "2025-11-05T16:45:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000009",
+      "pilotId": "pilot00002",
+      "text": "POS integration experiencing connectivity issues with legacy systems. Working with IT team to resolve.",
+      "type": "issue",
+      "isSystem": false,
+      "relatedTo": {
+        "type": "objective",
+        "id": "obj0000007",
+        "name": "POS Integration"
+      },
+      "createdBy": "sarah.johnson@wobot.ai",
+      "createdAt": "2025-12-18T13:20:00.000Z",
+      "updatedAt": "2025-12-18T13:20:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000010",
+      "pilotId": "pilot00002",
+      "text": "November analytics report shows 15% increase in foot traffic detection accuracy",
+      "type": "update",
+      "isSystem": false,
+      "relatedTo": {
+        "type": "asset",
+        "id": "asset00005",
+        "name": "Monthly Analytics Report - November"
+      },
+      "createdBy": "sarah.johnson@wobot.ai",
+      "createdAt": "2025-12-01T09:00:00.000Z",
+      "updatedAt": "2025-12-01T09:00:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000011",
+      "pilotId": "pilot00003",
+      "text": "TechStart pilot created in draft status",
+      "type": "activity",
+      "isSystem": true,
+      "createdBy": "gstaniforth@smartfranchise.ai",
+      "createdAt": "2025-12-01T11:30:00.000Z",
+      "updatedAt": "2025-12-01T11:30:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000012",
+      "pilotId": "pilot00003",
+      "text": "Building permit application submitted to City of Seattle. Awaiting approval.",
+      "type": "note",
+      "isSystem": false,
+      "relatedTo": {
+        "type": "asset",
+        "id": "asset00006",
+        "name": "Building Permit Application"
+      },
+      "createdBy": "gstaniforth@smartfranchise.ai",
+      "createdAt": "2025-12-05T13:15:00.000Z",
+      "updatedAt": "2025-12-05T13:15:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000013",
+      "pilotId": "pilot00003",
+      "text": "Permit approval delayed due to additional documentation requirements. Expected resolution by Dec 20.",
+      "type": "issue",
+      "isSystem": false,
+      "relatedTo": {
+        "type": "objective",
+        "id": "obj0000008",
+        "name": "Obtain Building Permits"
+      },
+      "createdBy": "mike.chen@partner.com",
+      "createdAt": "2025-12-12T10:30:00.000Z",
+      "updatedAt": "2025-12-12T10:30:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000014",
+      "pilotId": "pilot00004",
+      "text": "Altitude Trampoline Park pilot initiated",
+      "type": "activity",
+      "isSystem": true,
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-11-20T08:45:00.000Z",
+      "updatedAt": "2025-11-20T08:45:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000015",
+      "pilotId": "pilot00004",
+      "text": "All 22 cameras installed successfully. Main play area coverage verified.",
+      "type": "update",
+      "isSystem": false,
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-11-26T15:20:00.000Z",
+      "updatedAt": "2025-11-26T15:20:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000016",
+      "pilotId": "pilot00004",
+      "text": "Safety zone monitoring AI configured and tested. Detection accuracy at 94%.",
+      "type": "update",
+      "isSystem": false,
+      "relatedTo": {
+        "type": "objective",
+        "id": "obj0000010",
+        "name": "Safety Zone Monitoring Setup"
+      },
+      "createdBy": "sarah.johnson@wobot.ai",
+      "createdAt": "2025-12-22T15:30:00.000Z",
+      "updatedAt": "2025-12-22T15:30:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000017",
+      "pilotId": "pilot00004",
+      "text": "Mobile app integration blocked pending API access from facility management system vendor.",
+      "type": "issue",
+      "isSystem": false,
+      "relatedTo": {
+        "type": "objective",
+        "id": "obj0000012",
+        "name": "Mobile App Integration"
+      },
+      "createdBy": "john@wobot.ai",
+      "createdAt": "2025-12-20T11:00:00.000Z",
+      "updatedAt": "2025-12-20T11:00:00.000Z",
+      "isEdited": false
+    },
+    {
+      "id": "rem0000018",
+      "pilotId": "pilot00004",
+      "text": "Customer analytics dashboard setup progressing well. Peak hours analysis feature complete.",
+      "type": "update",
+      "isSystem": false,
+      "relatedTo": {
+        "type": "objective",
+        "id": "obj0000011",
+        "name": "Customer Analytics Dashboard"
+      },
+      "createdBy": "sarah.johnson@wobot.ai",
+      "createdAt": "2025-12-23T09:10:00.000Z",
+      "updatedAt": "2025-12-23T09:10:00.000Z",
+      "isEdited": false
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-12-23T09:10:00.000Z",
+    "totalRemarks": 18
+  }
+}

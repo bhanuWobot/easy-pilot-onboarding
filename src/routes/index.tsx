@@ -5,34 +5,29 @@ import { SetupPage } from '../pages/SetupPage';
 import { LoginPage } from '../pages/LoginPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { PilotDetailsPage } from '../pages/PilotDetailsPage';
-import { CustomerWelcomePage } from '../pages/CustomerWelcomePage';
-import { UsersPage } from '../pages/UsersPage';
-import { UserDetailsPage } from '../pages/UserDetailsPage';
-import { UserFormPage } from '../pages/UserFormPage';
-import { CustomersPage } from '../pages/CustomersPage';
-import { CustomerDetailsPage } from '../pages/CustomerDetailsPage';
-import { CustomerFormPage } from '../pages/CustomerFormPage';
-import { ProtectedRoute } from '../components/auth/ProtectedRoute';
-
-// Root redirect component that checks auth state
-function RootRedirect() {
-  const authData = localStorage.getItem('auth_user');
-  const isAuthenticated = !!authData;
-  
-  return <Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />;
-}
+import { PilotsPage } from "../pages/PilotsPage";
+import { CustomerWelcomePage } from "../pages/CustomerWelcomePage";
+import { UsersPage } from "../pages/UsersPage";
+import { UserDetailsPage } from "../pages/UserDetailsPage";
+import { UserFormPage } from "../pages/UserFormPage";
+import { CustomersPage } from "../pages/CustomersPage";
+import { CustomerDetailsPage } from "../pages/CustomerDetailsPage";
+import { CustomerFormPage } from "../pages/CustomerFormPage";
+import { ObjectiveDetailsPage } from "../pages/ObjectiveDetailsPage";
+import { AlertsPage } from "../pages/AlertsPage";
+import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 
 export const router = createBrowserRouter([
   {
-    path: '/',
-    element: <RootRedirect />,
+    path: "/",
+    element: <Navigate to="/dashboard" replace />,
   },
   {
-    path: '/login',
+    path: "/login",
     element: <LoginPage />,
   },
   {
-    path: '/dashboard',
+    path: "/dashboard",
     element: (
       <ProtectedRoute>
         <DashboardPage />
@@ -40,7 +35,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/onboard/new',
+    path: "/onboard/new",
     element: (
       <ProtectedRoute>
         <CreatePilotPage />
@@ -48,7 +43,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/pilots/create',
+    path: "/pilots/create",
     element: (
       <ProtectedRoute>
         <CreatePilotPage />
@@ -56,7 +51,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/pilots/:id',
+    path: "/pilots/:id",
     element: (
       <ProtectedRoute>
         <PilotDetailsPage />
@@ -64,23 +59,31 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/pilots',
+    path: "/pilots/:pilotId/objectives/:objectiveId",
     element: (
       <ProtectedRoute>
-        <DashboardPage />
+        <ObjectiveDetailsPage />
       </ProtectedRoute>
     ),
   },
   {
-    path: '/alerts',
+    path: "/pilots",
     element: (
       <ProtectedRoute>
-        <DashboardPage />
+        <PilotsPage />
       </ProtectedRoute>
     ),
   },
   {
-    path: '/users',
+    path: "/alerts",
+    element: (
+      <ProtectedRoute>
+        <AlertsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/users",
     element: (
       <ProtectedRoute>
         <UsersPage />
@@ -88,7 +91,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/users/new',
+    path: "/users/new",
     element: (
       <ProtectedRoute>
         <UserFormPage />
@@ -96,7 +99,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/users/:id',
+    path: "/users/:id",
     element: (
       <ProtectedRoute>
         <UserDetailsPage />
@@ -104,7 +107,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/users/:id/edit',
+    path: "/users/:id/edit",
     element: (
       <ProtectedRoute>
         <UserFormPage />
@@ -112,7 +115,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/customers',
+    path: "/customers",
     element: (
       <ProtectedRoute>
         <CustomersPage />
@@ -120,7 +123,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/customers/new',
+    path: "/customers/new",
     element: (
       <ProtectedRoute>
         <CustomerFormPage />
@@ -128,7 +131,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/customers/:id',
+    path: "/customers/:id",
     element: (
       <ProtectedRoute>
         <CustomerDetailsPage />
@@ -136,7 +139,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/customers/:id/edit',
+    path: "/customers/:id/edit",
     element: (
       <ProtectedRoute>
         <CustomerFormPage />
@@ -144,7 +147,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/assets',
+    path: "/assets",
     element: (
       <ProtectedRoute>
         <DashboardPage />
@@ -152,7 +155,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/settings',
+    path: "/settings",
     element: (
       <ProtectedRoute>
         <DashboardPage />
@@ -161,15 +164,15 @@ export const router = createBrowserRouter([
   },
   // Public customer-facing routes
   {
-    path: '/welcome/:id',
+    path: "/welcome/:id",
     element: <CustomerWelcomePage />,
   },
   {
-    path: '/camera-details/:id',
+    path: "/camera-details/:id",
     element: <CameraDetailsPage />,
   },
   {
-    path: '/setup/:id',
+    path: "/setup/:id",
     element: <SetupPage />,
   },
 ]);

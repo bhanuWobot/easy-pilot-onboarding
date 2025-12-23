@@ -13,25 +13,40 @@ interface ObjectiveDatabase {
 
 const OBJECTIVES_DB_KEY = 'objectives_db';
 
+async function loadObjectivesDatabase(): Promise<ObjectiveDatabase> {
+  try {
+    const response = await fetch('/db/objectives.json');
+    if (!response.ok) {
+      throw new Error('Failed to load objectives database');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error loading objectives from file:', error);
+    return {
+      objectives: [],
+      metadata: {
+        version: '1.0',
+        lastUpdated: new Date().toISOString(),
+        totalObjectives: 0,
+      },
+    };
+  }
+}
+
 async function getObjectivesDatabase(): Promise<ObjectiveDatabase> {
-  const stored = localStorage.getItem(OBJECTIVES_DB_KEY);
+  const stored = sessionStorage.getItem(OBJECTIVES_DB_KEY);
   if (stored) {
     return JSON.parse(stored);
   }
-  return {
-    objectives: [],
-    metadata: {
-      version: '1.0',
-      lastUpdated: new Date().toISOString(),
-      totalObjectives: 0,
-    },
-  };
+  const db = await loadObjectivesDatabase();
+  saveObjectivesDatabase(db);
+  return db;
 }
 
 function saveObjectivesDatabase(db: ObjectiveDatabase): void {
   db.metadata.lastUpdated = new Date().toISOString();
   db.metadata.totalObjectives = db.objectives.length;
-  localStorage.setItem(OBJECTIVES_DB_KEY, JSON.stringify(db));
+  sessionStorage.setItem(OBJECTIVES_DB_KEY, JSON.stringify(db));
 }
 
 export async function createObjective(objectiveData: Omit<Objective, 'id' | 'createdAt' | 'updatedAt' | 'order'>): Promise<Objective> {
@@ -97,6 +112,22 @@ export async function updateObjective(id: string, updates: Partial<Objective>, u
     await createRemark({
       pilotId: oldObjective.pilotId,
       text: `Updated objective "${oldObjective.title}" status to ${updates.status}`,
+      type: 'activity',
+      isSystem: true,
+      relatedTo: {
+        type: 'objective',
+        id: oldObjective.id,
+        name: oldObjective.title,
+      },
+      createdBy: userId,
+    });
+  }
+  
+  // Create activity log for success criteria updates
+  if (updates.successCriteria && JSON.stringify(updates.successCriteria) !== JSON.stringify(oldObjective.successCriteria)) {
+    await createRemark({
+      pilotId: oldObjective.pilotId,
+      text: `Updated success criteria for "${oldObjective.title}" to ${updates.successCriteria.targetPercentage}% - ${updates.successCriteria.description}`,
       type: 'activity',
       isSystem: true,
       relatedTo: {

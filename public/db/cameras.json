@@ -1,0 +1,246 @@
+{
+  "cameras": [
+    {
+      "id": "cam0000001",
+      "pilotId": "pilot00001",
+      "locationId": "loc1000001",
+      "name": "Main Entrance Camera",
+      "location": "Austin Main Office - Front Entrance",
+      "frames": [
+        {
+          "id": "frame00001",
+          "fileName": "entrance-view.jpg",
+          "fileUrl": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAoACgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlbaWmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5/ooooA//2Q==",
+          "fileSize": 2048,
+          "uploadedAt": "2025-11-01T10:30:00.000Z",
+          "isPrimary": true
+        }
+      ],
+      "make": "Hikvision",
+      "model": "DS-2CD2143G0-I",
+      "status": "active",
+      "installationDate": "2025-11-05",
+      "notes": "4MP IR Fixed Dome camera covering main entrance",
+      "createdAt": "2025-11-01T10:30:00.000Z",
+      "updatedAt": "2025-12-20T14:30:00.000Z"
+    },
+    {
+      "id": "cam0000002",
+      "pilotId": "pilot00001",
+      "locationId": "loc1000001",
+      "name": "Reception Area",
+      "location": "Austin Main Office - Reception",
+      "frames": [
+        {
+          "id": "frame00002",
+          "fileName": "reception-view.jpg",
+          "fileUrl": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&h=600&fit=crop",
+          "fileSize": 12500,
+          "uploadedAt": "2025-11-06T10:00:00.000Z",
+          "isPrimary": true
+        }
+      ],
+      "make": "Axis",
+      "model": "M3045-V",
+      "status": "installed",
+      "installationDate": "2025-11-06",
+      "notes": "Network camera for reception monitoring",
+      "createdAt": "2025-11-01T10:35:00.000Z",
+      "updatedAt": "2025-12-20T14:30:00.000Z"
+    },
+    {
+      "id": "cam0000003",
+      "pilotId": "pilot00001",
+      "locationId": "loc1000002",
+      "name": "Warehouse Loading Dock",
+      "location": "Austin Warehouse - Loading Area",
+      "frames": [
+        {
+          "id": "frame00003",
+          "fileName": "warehouse-loading.jpg",
+          "fileUrl": "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&h=600&fit=crop",
+          "fileSize": 14200,
+          "uploadedAt": "2025-11-08T11:00:00.000Z",
+          "isPrimary": true
+        }
+      ],
+      "make": "Dahua",
+      "model": "IPC-HFW5831E-Z5E",
+      "status": "active",
+      "installationDate": "2025-11-08",
+      "notes": "8MP motorized lens covering loading dock",
+      "createdAt": "2025-11-01T10:40:00.000Z",
+      "updatedAt": "2025-12-20T14:30:00.000Z"
+    },
+    {
+      "id": "cam0000004",
+      "pilotId": "pilot00002",
+      "locationId": "loc1000003",
+      "name": "Store Front",
+      "location": "SF Downtown Store - Entrance",
+      "frames": [
+        {
+          "id": "frame00004",
+          "fileName": "store-entrance.jpg",
+          "fileUrl": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop",
+          "fileSize": 13800,
+          "uploadedAt": "2025-10-20T12:00:00.000Z",
+          "isPrimary": true
+        }
+      ],
+      "make": "Hikvision",
+      "model": "DS-2CD2143G2-IU",
+      "status": "active",
+      "installationDate": "2025-10-20",
+      "notes": "AcuSense technology for people detection",
+      "createdAt": "2025-10-15T09:40:00.000Z",
+      "updatedAt": "2025-12-22T16:45:00.000Z"
+    },
+    {
+      "id": "cam0000005",
+      "pilotId": "pilot00002",
+      "locationId": "loc1000003",
+      "name": "Cash Register Area",
+      "location": "SF Downtown Store - Point of Sale",
+      "frames": [
+        {
+          "id": "frame00005",
+          "fileName": "pos-view.jpg",
+          "fileUrl": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=600&fit=crop",
+          "fileSize": 11900,
+          "uploadedAt": "2025-10-20T12:30:00.000Z",
+          "isPrimary": true
+        }
+      ],
+      "make": "Axis",
+      "model": "P3245-LVE",
+      "status": "active",
+      "installationDate": "2025-10-20",
+      "notes": "High-resolution camera for POS monitoring",
+      "createdAt": "2025-10-15T09:45:00.000Z",
+      "updatedAt": "2025-12-22T16:45:00.000Z"
+    },
+    {
+      "id": "cam0000006",
+      "pilotId": "pilot00002",
+      "locationId": "loc1000004",
+      "name": "Warehouse Perimeter",
+      "location": "SF Warehouse District - Exterior",
+      "frames": [
+        {
+          "id": "frame00006",
+          "fileName": "warehouse-exterior.jpg",
+          "fileUrl": "https://images.unsplash.com/photo-1553413077-190dd305871c?w=800&h=600&fit=crop",
+          "fileSize": 15200,
+          "uploadedAt": "2025-10-25T14:00:00.000Z",
+          "isPrimary": true
+        }
+      ],
+      "make": "Hanwha",
+      "model": "PNO-9080R",
+      "status": "active",
+      "installationDate": "2025-10-25",
+      "notes": "4K outdoor dome with IR illumination",
+      "createdAt": "2025-10-15T09:50:00.000Z",
+      "updatedAt": "2025-12-22T16:45:00.000Z"
+    },
+    {
+      "id": "cam0000007",
+      "pilotId": "pilot00003",
+      "locationId": "loc1000006",
+      "name": "Office Entry",
+      "location": "Seattle Tech Campus - Main Door",
+      "frames": [
+        {
+          "id": "frame00007",
+          "fileName": "office-entry.jpg",
+          "fileUrl": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&h=600&fit=crop",
+          "fileSize": 13100,
+          "uploadedAt": "2025-12-01T15:00:00.000Z",
+          "isPrimary": true
+        }
+      ],
+      "status": "planned",
+      "notes": "Planned installation for office entrance",
+      "createdAt": "2025-12-01T11:40:00.000Z",
+      "updatedAt": "2025-12-15T10:20:00.000Z"
+    },
+    {
+      "id": "cam0000008",
+      "pilotId": "pilot00004",
+      "locationId": "loc1000007",
+      "name": "Main Play Area",
+      "location": "Trampoline Park - Central Court",
+      "frames": [
+        {
+          "id": "frame00008",
+          "fileName": "trampoline-main.jpg",
+          "fileUrl": "https://images.unsplash.com/photo-1545224144-b38cd309ef69?w=800&h=600&fit=crop",
+          "fileSize": 16500,
+          "uploadedAt": "2025-11-25T10:00:00.000Z",
+          "isPrimary": true
+        }
+      ],
+      "make": "Hikvision",
+      "model": "DS-2CD2386G2-IU",
+      "status": "active",
+      "installationDate": "2025-11-25",
+      "notes": "8MP dome for wide area coverage",
+      "createdAt": "2025-11-20T09:00:00.000Z",
+      "updatedAt": "2025-12-23T09:10:00.000Z"
+    },
+    {
+      "id": "cam0000009",
+      "pilotId": "pilot00004",
+      "locationId": "loc1000007",
+      "name": "Safety Zone 1",
+      "location": "Trampoline Park - North Section",
+      "frames": [
+        {
+          "id": "frame00009",
+          "fileName": "safety-zone.jpg",
+          "fileUrl": "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&h=600&fit=crop",
+          "fileSize": 14800,
+          "uploadedAt": "2025-11-25T10:30:00.000Z",
+          "isPrimary": true
+        }
+      ],
+      "make": "Axis",
+      "model": "M3068-P",
+      "status": "active",
+      "installationDate": "2025-11-25",
+      "notes": "Panoramic camera for safety monitoring",
+      "createdAt": "2025-11-20T09:05:00.000Z",
+      "updatedAt": "2025-12-23T09:10:00.000Z"
+    },
+    {
+      "id": "cam0000010",
+      "pilotId": "pilot00004",
+      "locationId": "loc1000007",
+      "name": "Entrance Counter",
+      "location": "Trampoline Park - Front Desk",
+      "frames": [
+        {
+          "id": "frame00010",
+          "fileName": "entrance-counter-view.jpg",
+          "fileUrl": "data:image/jpeg;base64,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",
+          "fileSize": 15360,
+          "uploadedAt": "2025-12-23T14:30:00.000Z",
+          "isPrimary": true
+        }
+      ],
+      "make": "Dahua",
+      "model": "IPC-HFW2431S-S-S2",
+      "status": "active",
+      "installationDate": "2025-11-26",
+      "notes": "4MP camera for customer service area",
+      "createdAt": "2025-11-20T09:10:00.000Z",
+      "updatedAt": "2025-12-23T09:10:00.000Z"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-12-23T16:00:00.000Z",
+    "totalCameras": 10
+  }
+}

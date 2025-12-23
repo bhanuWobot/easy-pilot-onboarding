@@ -4,7 +4,6 @@ import { useOnboardingBuilder } from '../contexts/OnboardingBuilderContext';
 import { ConfigForm } from '../components/builder/ConfigForm';
 import { WelcomePagePreview } from '../components/preview/WelcomePagePreview';
 import { copyToClipboard } from '../utils/linkGenerator';
-import { createPilot, generatePilotLink } from '../utils/db';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/shared/Button';
 import { Input } from '../components/shared/Input';
@@ -13,7 +12,7 @@ import { Toggle } from '../components/shared/Toggle';
 export function LinkGeneratorPage() {
   const { state: onboardingState, dispatch } = useOnboardingBuilder();
   const { state: authState } = useAuth();
-  const [shareableLink, setShareableLink] = useState('');
+  const [shareableLink] = useState('');
   
   // New state for customer data collection mode
   const [enableCustomerLink, setEnableCustomerLink] = useState(false);
@@ -50,10 +49,11 @@ export function LinkGeneratorPage() {
           return;
         }
         
-        const pilot = await createPilot(onboardingState.config, authState.user.email);
-        const link = generatePilotLink(pilot.id);
-        setShareableLink(link);
-        toast.success('Pilot created with customer onboarding link!');
+        // TODO: Update this to work with new PilotRecord structure
+        // const pilot = await createPilot(onboardingState.config, authState.user.email);
+        // const link = generatePilotLink(pilot.id);
+        // setShareableLink(link);
+        toast.error('This feature is currently being updated');
       } else {
         // Validate basic pilot
         if (!pilotData.companyName.trim()) {
@@ -61,12 +61,13 @@ export function LinkGeneratorPage() {
           return;
         }
         
-        const basicConfig = {
-          ...onboardingState.config,
-          pilotName: pilotData.companyName,
-        };
-        await createPilot(basicConfig, authState.user.email);
-        toast.success('Pilot created successfully!');
+        // TODO: Update this to work with new PilotRecord structure
+        // const basicConfig = {
+        //   ...onboardingState.config,
+        //   pilotName: pilotData.companyName,
+        // };
+        // await createPilot(basicConfig, authState.user.email);
+        toast.error('This feature is currently being updated');
         // Reset form
         setPilotData({
           companyName: '',

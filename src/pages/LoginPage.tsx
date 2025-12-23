@@ -97,7 +97,7 @@ export function LoginPage() {
               <Input
                 label="Email"
                 type="email"
-                placeholder="tushar@wobot.ai"
+                placeholder="john@wobot.ai"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -118,11 +118,11 @@ export function LoginPage() {
             </div>
 
             {/* Helper Text */}
-            <div className="text-sm text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            {/* <div className="text-sm text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="font-medium text-blue-900 mb-1">Demo Credentials:</p>
-              <p className="text-blue-700">Email: tushar@wobot.ai</p>
+              <p className="text-blue-700">Email: john@wobot.ai</p>
               <p className="text-blue-700">Password: password123</p>
-            </div>
+            </div> */}
 
             <Button
               type="submit"

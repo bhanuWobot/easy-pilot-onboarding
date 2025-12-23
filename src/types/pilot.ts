@@ -2,7 +2,7 @@
  * Pilot type definitions and mock data
  */
 
-export type PilotStatus = 'active' | 'in-progress' | 'completed' | 'on-hold' | 'issues';
+export type PilotStatus = "draft" | "active" | "in-progress" | "completed" | "on-hold" | "issues";
 
 export interface Pilot {
   id: string;
@@ -101,18 +101,20 @@ export const MOCK_PILOTS: Pilot[] = [
  */
 export function getStatusBadgeStyle(status: PilotStatus): string {
   switch (status) {
-    case 'active':
-      return 'bg-green-100 text-green-800 border-green-200';
-    case 'in-progress':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    case 'completed':
-      return 'bg-blue-100 text-blue-800 border-blue-200';
-    case 'on-hold':
-      return 'bg-gray-100 text-gray-800 border-gray-200';
-    case 'issues':
-      return 'bg-red-100 text-red-800 border-red-200';
+    case "draft":
+      return "bg-gray-100 text-gray-700 border-gray-200";
+    case "active":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "in-progress":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "completed":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case "on-hold":
+      return "bg-gray-100 text-gray-800 border-gray-200";
+    case "issues":
+      return "bg-red-100 text-red-800 border-red-200";
     default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
+      return "bg-gray-100 text-gray-800 border-gray-200";
   }
 }
 
@@ -123,16 +125,18 @@ export function getStatusBadgeStyle(status: PilotStatus): string {
  */
 export function getStatusDisplayText(status: PilotStatus): string {
   switch (status) {
-    case 'active':
-      return 'Active';
-    case 'in-progress':
-      return 'In Progress';
-    case 'completed':
-      return 'Completed';
-    case 'on-hold':
-      return 'On Hold';
-    case 'issues':
-      return 'Issues';
+    case "draft":
+      return "Draft";
+    case "active":
+      return "Active";
+    case "in-progress":
+      return "In Progress";
+    case "completed":
+      return "Completed";
+    case "on-hold":
+      return "On Hold";
+    case "issues":
+      return "Issues";
     default:
       return status;
   }

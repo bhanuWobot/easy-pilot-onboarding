@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { OnboardingBuilderProvider } from './contexts/OnboardingBuilderContext';
 import { router } from './routes';
+import './utils/exportDb'; // Import export utilities for browser console access
 
 function App() {
   return (

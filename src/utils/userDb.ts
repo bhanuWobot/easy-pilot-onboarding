@@ -19,11 +19,11 @@ async function loadUsersDatabase(): Promise<UserDatabase> {
 function saveUsersDatabase(db: UserDatabase): void {
   db.metadata.lastUpdated = new Date().toISOString();
   db.metadata.totalUsers = db.users.length;
-  localStorage.setItem(USERS_DB_KEY, JSON.stringify(db));
+  sessionStorage.setItem(USERS_DB_KEY, JSON.stringify(db));
 }
 
 async function getUsersDatabase(): Promise<UserDatabase> {
-  const stored = localStorage.getItem(USERS_DB_KEY);
+  const stored = sessionStorage.getItem(USERS_DB_KEY);
   if (stored) {
     return JSON.parse(stored);
   }

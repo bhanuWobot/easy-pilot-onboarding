@@ -1,11 +1,18 @@
 export type ObjectiveStatus = 'pending' | 'in-progress' | 'completed' | 'blocked';
 export type ObjectivePriority = 'low' | 'medium' | 'high';
 
+export interface SuccessCriteria {
+  targetPercentage: number; // 0-100
+  description: string; // e.g., "Accuracy on Customer wait time at checkout with full journey time"
+}
+
 export interface Objective {
   id: string;
   pilotId: string;
   title: string;
   description?: string; // Rich text HTML
+  usecase?: string; // Use case description for this objective
+  successCriteria?: SuccessCriteria; // Success criteria for this objective
   status: ObjectiveStatus;
   priority: ObjectivePriority;
   assignedTo?: string[];

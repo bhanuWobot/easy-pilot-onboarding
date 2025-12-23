@@ -28,14 +28,18 @@ export interface PilotRecord extends OnboardingConfig {
   name: string;
   company: string;
   contactEmail: string;
-  status: 'draft' | 'active' | 'completed';
+  status: "draft" | "active" | "completed";
   progress?: number; // 0-100, calculated from objectives
-  cameraCount: string;
-  location: string;
-  locationName: string;
+  cameraCount: string; // Deprecated - kept for backward compatibility
+  location: string; // Deprecated - kept for backward compatibility
+  locationName: string; // Deprecated - kept for backward compatibility
+  locationIds: string[]; // Array of Location IDs
+  contactId?: string; // Primary contact ID
+  assetIds: string[]; // Array of Asset IDs
   startDate: string;
   customerId?: string;
-  assignedUserIds: string[];
+  assignedUserIds: string[]; // Array of User IDs
+  assignedUsers?: string[]; // Array of User emails (for compatibility)
   createdAt: string;
   updatedAt: string;
   createdBy?: string;

@@ -13,24 +13,33 @@ interface CameraDatabase {
 const CAMERAS_DB_KEY = 'cameras_db';
 
 async function loadCamerasDatabase(): Promise<CameraDatabase> {
-  return {
-    cameras: [],
-    metadata: {
-      version: '1.0',
-      lastUpdated: new Date().toISOString(),
-      totalCameras: 0,
-    },
-  };
+  try {
+    const response = await fetch('/db/cameras.json');
+    if (!response.ok) {
+      throw new Error('Failed to load cameras database');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error loading cameras from file:', error);
+    return {
+      cameras: [],
+      metadata: {
+        version: '1.0',
+        lastUpdated: new Date().toISOString(),
+        totalCameras: 0,
+      },
+    };
+  }
 }
 
 function saveCamerasDatabase(db: CameraDatabase): void {
   db.metadata.lastUpdated = new Date().toISOString();
   db.metadata.totalCameras = db.cameras.length;
-  localStorage.setItem(CAMERAS_DB_KEY, JSON.stringify(db));
+  sessionStorage.setItem(CAMERAS_DB_KEY, JSON.stringify(db));
 }
 
 async function getCamerasDatabase(): Promise<CameraDatabase> {
-  const stored = localStorage.getItem(CAMERAS_DB_KEY);
+  const stored = sessionStorage.getItem(CAMERAS_DB_KEY);
   if (stored) {
     return JSON.parse(stored);
   }

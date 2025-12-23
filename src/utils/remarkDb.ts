@@ -12,25 +12,40 @@ interface RemarkDatabase {
 
 const REMARKS_DB_KEY = 'remarks_db';
 
+async function loadRemarksDatabase(): Promise<RemarkDatabase> {
+  try {
+    const response = await fetch('/db/remarks.json');
+    if (!response.ok) {
+      throw new Error('Failed to load remarks database');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error loading remarks from file:', error);
+    return {
+      remarks: [],
+      metadata: {
+        version: '1.0',
+        lastUpdated: new Date().toISOString(),
+        totalRemarks: 0,
+      },
+    };
+  }
+}
+
 async function getRemarksDatabase(): Promise<RemarkDatabase> {
-  const stored = localStorage.getItem(REMARKS_DB_KEY);
+  const stored = sessionStorage.getItem(REMARKS_DB_KEY);
   if (stored) {
     return JSON.parse(stored);
   }
-  return {
-    remarks: [],
-    metadata: {
-      version: '1.0',
-      lastUpdated: new Date().toISOString(),
-      totalRemarks: 0,
-    },
-  };
+  const db = await loadRemarksDatabase();
+  saveRemarksDatabase(db);
+  return db;
 }
 
 function saveRemarksDatabase(db: RemarkDatabase): void {
   db.metadata.lastUpdated = new Date().toISOString();
   db.metadata.totalRemarks = db.remarks.length;
-  localStorage.setItem(REMARKS_DB_KEY, JSON.stringify(db));
+  sessionStorage.setItem(REMARKS_DB_KEY, JSON.stringify(db));
 }
 
 export async function createRemark(remarkData: Omit<Remark, 'id' | 'createdAt' | 'isEdited'>): Promise<Remark> {

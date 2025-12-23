@@ -35,8 +35,9 @@ export interface StoredCameraFrame {
 export interface Camera {
   id: string;
   pilotId: string;
+  locationId: string; // Location ID reference
   name: string;
-  location: string;
+  location: string; // Deprecated - kept for backward compatibility
   frames: StoredCameraFrame[];
   make?: string;
   model?: string;

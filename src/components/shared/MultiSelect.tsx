@@ -69,19 +69,15 @@ export default function MultiSelect({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          {label}
-        </label>
-      )}
+      {label && <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>}
 
       {/* Selected Users Display */}
       <div
         onClick={() => setIsOpen(!isOpen)}
         className={`min-h-[42px] w-full px-3 py-2 border rounded-lg cursor-pointer transition-all ${
           error
-            ? 'border-red-300 focus-within:ring-2 focus-within:ring-red-500/20'
-            : 'border-gray-300 hover:border-gray-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20'
+            ? "border-red-300 focus-within:ring-2 focus-within:ring-red-500/20"
+            : "border-gray-300 hover:border-gray-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20"
         }`}
       >
         {selectedUsers.length > 0 ? (
@@ -92,13 +88,7 @@ export default function MultiSelect({
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 text-sm rounded-md border border-blue-200"
               >
                 <div className="flex items-center gap-1.5">
-                  {user.avatar && (
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-4 h-4 rounded-full"
-                    />
-                  )}
+                  {user.avatar && <img src={user.avatar} alt={user.name} className="w-4 h-4 rounded-full" />}
                   <span className="font-medium">{user.name}</span>
                   <span className="text-xs opacity-75">({user.userType})</span>
                 </div>
@@ -109,18 +99,8 @@ export default function MultiSelect({
                   }}
                   className="ml-1 hover:bg-blue-200 rounded-full p-0.5 transition-colors"
                 >
-                  <svg
-                    className="w-3 h-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </span>
@@ -131,21 +111,14 @@ export default function MultiSelect({
         )}
 
         {/* Dropdown Arrow */}
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+        <div className="absolute right-3 top-10 pointer-events-none">
           <svg
-            className={`w-5 h-5 text-gray-400 transition-transform ${
-              isOpen ? 'rotate-180' : ''
-            }`}
+            className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
       </div>
@@ -172,7 +145,7 @@ export default function MultiSelect({
             {filteredUsers.length > 0 ? (
               <>
                 {/* Group by User Type */}
-                {['Platform', 'Partner'].map((type) => {
+                {["Platform", "Partner"].map((type) => {
                   const typeUsers = filteredUsers.filter((u) => u.userType === type);
                   if (typeUsers.length === 0) return null;
 
@@ -194,20 +167,12 @@ export default function MultiSelect({
                             onChange={() => toggleUser(user.id)}
                             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500/20"
                           />
-                          
-                          {user.avatar && (
-                            <img
-                              src={user.avatar}
-                              alt={user.name}
-                              className="w-8 h-8 rounded-full"
-                            />
-                          )}
-                          
+
+                          {user.avatar && <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />}
+
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-gray-900 text-sm">
-                                {user.name}
-                              </span>
+                              <span className="font-medium text-gray-900 text-sm">{user.name}</span>
                               <span
                                 className={`px-1.5 py-0.5 text-xs font-medium rounded border ${getRoleBadgeStyle(
                                   user.role
@@ -217,9 +182,7 @@ export default function MultiSelect({
                               </span>
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-xs text-gray-500 truncate">
-                                {user.email}
-                              </span>
+                              <span className="text-xs text-gray-500 truncate">{user.email}</span>
                               <span
                                 className={`px-1.5 py-0.5 text-xs font-medium rounded border ${getUserTypeBadgeStyle(
                                   user.userType
@@ -236,9 +199,7 @@ export default function MultiSelect({
                 })}
               </>
             ) : (
-              <div className="px-4 py-8 text-center text-gray-500 text-sm">
-                No users found
-              </div>
+              <div className="px-4 py-8 text-center text-gray-500 text-sm">No users found</div>
             )}
           </div>
 
