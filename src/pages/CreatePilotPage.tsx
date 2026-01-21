@@ -53,6 +53,7 @@ export function CreatePilotPage() {
     contactEmail: "",
     description: "",
     startDate: new Date().toISOString().split("T")[0],
+    expectedEndDate: "",
     status: "active" as "draft" | "active" | "completed",
   });
 
@@ -256,6 +257,7 @@ export function CreatePilotPage() {
         contactId: selectedContactId || undefined,
         assetIds: [], // Will be populated after assets are created
         startDate: pilotData.startDate,
+        expectedEndDate: pilotData.expectedEndDate || undefined,
         status: pilotData.status,
         customerId: selectedCustomerId || undefined,
         assignedUserIds: selectedUserIds,
@@ -655,6 +657,13 @@ export function CreatePilotPage() {
                     type="date"
                     value={pilotData.startDate}
                     onChange={(e) => setPilotData({ ...pilotData, startDate: e.target.value })}
+                  />
+
+                  <Input
+                    label="Expected End Date"
+                    type="date"
+                    value={pilotData.expectedEndDate}
+                    onChange={(e) => setPilotData({ ...pilotData, expectedEndDate: e.target.value })}
                   />
                 </div>
 

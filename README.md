@@ -43,6 +43,11 @@ This platform provides a complete onboarding solution where:
 - **Pilot Details Page**: Full pilot information hub with tabbed interface
   - **Overview Tab**: 
     - Pilot metadata (customer, created date, assigned users)
+    - **Date Management**: Start date and expected end date with inline editing
+      - Display formatted dates (e.g., "January 20, 2026")
+      - Edit button opens modal for updating both dates
+      - Expected end date is optional
+      - Changes tracked in activity timeline
     - Progress tracking with objectives summary
     - Cameras summary with status breakdown
     - Assets summary with category breakdown
@@ -75,20 +80,40 @@ This platform provides a complete onboarding solution where:
       - Edit mode: Grid layout with percentage input (1-100%) and description field
       - Display mode: Circular SVG progress indicator with green gradient
       - Activity tracking for all success criteria updates
-    - ROI Configuration section with interactive canvas
-      - Step 1: Location selection with multi-select dropdown
-      - Step 2: Camera and ROI drawing on uploaded frame
-        - Upload frame with drag-and-drop
-        - Draw multiple ROIs (Region of Interest) with click-to-draw
-        - Edit ROI names with inline editing
-        - Delete individual ROIs
-        - Clear all ROIs with confirmation
-        - ROI profile templates (Person, Vehicle, Zone Violation, etc.)
+    - **ROI Configuration section with interactive canvas**
+      - **Step 1: Location Selection** - Choose location from available options
+      - **Step 2: Camera Selection & ROI Drawing**
+        - Camera selector with thumbnail previews
+        - Interactive HTML5 canvas for drawing ROI shapes
+        - **ROI Profile System**: Create color-coded profiles for different detection types
+          - Profile chips with show/all/hide controls
+          - Profile deletion with confirmation
+          - Maximum 10 profiles per camera
+        - **Drawing Tools**: Rectangle, Circle, Polygon, Line, Arrow
+        - **Selection Tool**: Click shapes to select, move, resize, or delete
+        - **Figma-Style Comments**: Click any shape in Select mode to add comments
+          - Fixed-position comment panel appears near clicked shape
+          - Real-time comment threads with user avatars
+          - Enter key support for quick commenting
+          - Comment count badge on panel header
+          - Auto-load comments when panel opens
+          - Activity logging for all comments
+          - Database persistence with localStorage
+        - Color picker for shape customization
+        - Undo functionality for last drawn shape
+        - Unsaved changes tracking with save/discard options
+        - Multiple frames per camera with frame switcher
       - Save configuration with validation
+    - **Checklist System**: Track objective tasks with comments
+      - Regular checklist items with completion tracking
+      - AI-generated checklist recommendations
+      - Expandable comment threads on each item
+      - User avatars and timestamps
+      - Activity logging integration
   - **Activity Tab**: 
     - Chronological activity feed
     - User names displayed (not just emails)
-    - Activity types (objective created, asset uploaded, asset deleted, success criteria updated, etc.)
+    - Activity types (objective created, asset uploaded, asset deleted, success criteria updated, ROI comments, checklist updates, etc.)
     - Timestamp with relative time display
 - **Pilot Creation**: Multi-step wizard with customer selection and configuration
 - **Pilot Deletion**: Cascade delete with confirmation (removes all related cameras, assets, objectives, remarks)
@@ -303,6 +328,8 @@ Footer:   delay: 1.0s
   customerName: string;              // Customer associated
   status: 'draft' | 'active' | 'in-progress' | 'completed' | 'on-hold' | 'issues';
   progress: number;                  // 0-100 percentage
+  startDate: string;                 // Pilot start date (ISO format)
+  expectedEndDate?: string;          // Expected pilot completion date (ISO format, optional)
   createdBy: string;                 // Email of creator
   createdAt: string;                 // ISO timestamp
   lastModified: string;              // ISO timestamp
@@ -952,11 +979,11 @@ const themeColor = (fieldToggles.brandColor && brandColor) || '#3b82f6';
 
 **PilotDetailsPage.tsx**
 - Tabbed interface: Overview, Cameras, Assets, Objectives, Activity
-- **Overview Tab**: Pilot metadata, progress, cameras/assets summaries, delete pilot
+- **Overview Tab**: Pilot metadata with editable dates (start date and expected end date), progress, cameras/assets summaries, delete pilot
 - **Cameras Tab**: CRUD for cameras, frame upload, primary frame selection, status management
-- **Assets Tab**: Asset upload with categories, preview, download, delete
+- **Assets Tab**: Asset upload with categories, preview, download, delete, move to camera frames
 - **Objectives Tab**: Objective list with cards showing success criteria badges, priority, and status
-- **Activity Tab**: Chronological feed with user names and activity types
+- **Activity Tab**: Beautiful timeline with chronological feed showing user avatars, activity emojis, relative time, and precise timestamps
 - Route: `/pilots/:id`
 
 **ObjectiveDetailsPage.tsx**
@@ -967,19 +994,39 @@ const themeColor = (fieldToggles.brandColor && brandColor) || '#3b82f6';
   - Display mode: Circular progress indicator + gradient card
   - Auto-saves and triggers activity logging
 - **ROI Configuration Section**: Technical setup with 2 steps
-  - Step 1: Location Selection - Multi-select dropdown for camera locations
-  - Step 2: Camera & ROI Drawing - Interactive canvas for drawing regions of interest
-    - Frame upload with drag-and-drop
-    - Click-to-draw ROI rectangles
-    - Inline ROI name editing
-    - ROI profile modal with templates (Person, Vehicle, Zone, etc.)
-    - Delete individual ROIs or clear all
-- Smooth animations with Framer Motion (staggered section appearance)
+  - Step 1: Location Selection - Choose from available pilot locations
+  - Step 2: Camera & ROI Drawing - Interactive HTML5 canvas with advanced features
+    - Camera selector with thumbnail previews
+    - **ROI Profile System**: Create and manage color-coded detection profiles
+    - **Drawing Tools**: Rectangle, Circle, Polygon, Line, Arrow with color picker
+    - **Select Tool**: Click, move, resize, and delete shapes
+    - **Figma-Style Commenting**: 
+      - Click any shape in Select mode to open comment panel
+      - Fixed-position panel with viewport-aware positioning
+      - Real-time threaded comments with user avatars
+      - Comment count badge and empty states
+      - Enter key support for quick commenting
+      - Automatic activity logging to pilot timeline
+    - Undo last shape, unsaved changes tracking
+    - Multiple camera frames with frame switcher
+- **Checklist Section**: Task management with regular and AI-suggested checklists
+  - Create, complete, and delete checklist items
+  - **Compact Comment System**: Each checklist item supports threaded comments
+    - Click comment icon to expand inline comment thread  
+    - Real-time comment addition with user avatars and timestamps
+    - Comment count badge on items with comments
+    - Comments logged to activity feed and visible in pilot activity tab
+  - Separate sections for Regular and AI Checklists with different styling
+  - Database-backed with persistence via localStorage
+- Smooth animations with Framer Motion (staggered section appearance, expand/collapse comments)
 - Route: `/objectives/:id`
 
 **CreatePilotPage.tsx**
 - Multi-step wizard for creating new pilots
 - Customer selection and pilot configuration
+- Start date and expected end date fields
+- Location management with multiple locations support
+- Contact association and asset upload
 - Route: `/pilots/new`
 
 **LinkGeneratorPage.tsx**
@@ -1622,12 +1669,33 @@ npm install -D msw
   - ✅ Success criteria badges on objective cards in pilot details
 - ✅ ROI Configuration with interactive canvas
   - ✅ Multi-step configuration (Location Selection → Camera & ROI Drawing)
-  - ✅ Upload frame for ROI drawing with drag-and-drop
-  - ✅ Draw multiple ROIs with click-to-draw rectangles
-  - ✅ Inline ROI name editing
-  - ✅ Delete individual ROIs or clear all
-  - ✅ ROI profile templates (Person, Vehicle, Zone Violation, Crowd, Object, Face, License Plate)
-  - ✅ Location multi-select with add-new functionality
+  - ✅ Camera selector with thumbnail previews
+  - ✅ HTML5 canvas-based drawing system
+  - ✅ ROI Profile System with color-coded profiles (max 10 per camera)
+  - ✅ Drawing tools: Rectangle, Circle, Polygon, Line, Arrow
+  - ✅ Select tool for moving, resizing, and deleting shapes
+  - ✅ Color picker for shape customization
+  - ✅ Undo functionality for last drawn shape
+  - ✅ Multiple frames per camera with frame switcher
+  - ✅ Unsaved changes tracking with save/discard options
+  - ✅ **Figma-Style Comment System for ROI Shapes**
+    - ✅ Click any shape in Select mode to open comment panel
+    - ✅ Fixed-position panel with smart viewport positioning
+    - ✅ Real-time comment threads with user avatars (gradient circles)
+    - ✅ Comment count badge on panel header
+    - ✅ Enter key support for quick commenting
+    - ✅ Auto-load comments when panel opens (lazy loading)
+    - ✅ Activity logging integration (comments appear in pilot timeline)
+    - ✅ Database persistence via localStorage (17 sample comments)
+    - ✅ Empty state with icon and call-to-action
+    - ✅ Close panel on shape deselect or tool change
+- ✅ **Checklist System with Comments**
+  - ✅ Regular and AI-generated checklist items
+  - ✅ Expandable inline comment threads on each item
+  - ✅ Comment count badges
+  - ✅ User avatars and timestamps
+  - ✅ Activity logging for all comments
+  - ✅ Database persistence (49 checklists, 22 comments across all pilots)
 - ✅ Use Case section for business context description
 - ✅ Section reorganization for optimal UX flow (Use Case → Success Criteria → ROI Configuration)
 

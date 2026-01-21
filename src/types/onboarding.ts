@@ -37,6 +37,7 @@ export interface PilotRecord extends OnboardingConfig {
   contactId?: string; // Primary contact ID
   assetIds: string[]; // Array of Asset IDs
   startDate: string;
+  expectedEndDate?: string; // Expected completion date for the pilot
   customerId?: string;
   assignedUserIds: string[]; // Array of User IDs
   assignedUsers?: string[]; // Array of User emails (for compatibility)

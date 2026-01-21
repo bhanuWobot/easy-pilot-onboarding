@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '../components/shared/Button';
 import { ROICanvas, type DrawingTool } from '../components/objective/ROICanvas';
@@ -11,9 +11,25 @@ import type { Objective } from '../types/objective';
 import type { Camera, StoredCameraFrame } from '../types/camera';
 import type { ROIProfile, ROIDrawing } from '../types/roi';
 import type { Location } from '../types/location';
+import type { ChecklistItem, ChecklistComment } from '../types/checklist';
+import type { ROIComment } from '../types/roiComment';
 import { getObjectivesByPilot, updateObjective } from '../utils/objectiveDb';
 import { getCamerasByPilot } from '../utils/cameraDb';
 import { getLocationsByIds } from '../utils/locationDb';
+import {
+  getChecklistsByObjective,
+  createChecklist,
+  updateChecklist,
+  deleteChecklist,
+  addChecklistComment,
+  getCommentsByChecklist,
+  initChecklistDatabase,
+} from '../utils/checklistDb';
+import {
+  initROICommentDatabase,
+  getCommentsByShape,
+  addROIComment,
+} from '../utils/roiCommentDb';
 import {
   getROIProfilesByObjectiveCamera,
   createROIProfile,
@@ -49,9 +65,14 @@ export function ObjectiveDetailsPage() {
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showCommentPopover, setShowCommentPopover] = useState(false);
-  const [commentPosition, setCommentPosition] = useState({ x: 0, y: 0 });
-  const [commentText, setCommentText] = useState('');
+  
+  // ROI Comment states - Figma-style panel
+  const [showCommentPanel, setShowCommentPanel] = useState(false);
+  const [commentPanelPosition, setCommentPanelPosition] = useState({ x: 0, y: 0 });
+  const [selectedShapeForComment, setSelectedShapeForComment] = useState<ROIDrawing | null>(null);
+  const [roiComments, setRoiComments] = useState<ROIComment[]>([]);
+  const [newROIComment, setNewROIComment] = useState('');
+  const [loadingROIComments, setLoadingROIComments] = useState(false);
   
   // Usecase state
   const [usecase, setUsecase] = useState<string>('');
@@ -75,71 +96,12 @@ export function ObjectiveDetailsPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Checklist states
-  type ChecklistItem = {
-    id: string;
-    title: string;
-    description: string;
-    completed: boolean;
-  };
-  
-  const [checklists, setChecklists] = useState<ChecklistItem[]>([
-    {
-      id: '1',
-      title: 'Verify camera installation location',
-      description: 'Ensure camera is mounted at the correct height and angle',
-      completed: false,
-    },
-    {
-      id: '2',
-      title: 'Configure network settings',
-      description: 'Set up IP address, subnet mask, and gateway',
-      completed: true,
-    },
-    {
-      id: '3',
-      title: 'Test camera feed quality',
-      description: 'Check for clear image, proper lighting, and frame rate',
-      completed: false,
-    },
-    {
-      id: '4',
-      title: 'Set up recording schedule',
-      description: 'Configure continuous or motion-based recording',
-      completed: false,
-    },
-  ]);
-  const [aiChecklists, setAiChecklists] = useState<ChecklistItem[]>([
-    {
-      id: 'ai1',
-      title: 'Optimize ROI coverage',
-      description: 'AI detected potential blind spots in current ROI setup',
-      completed: false,
-    },
-    {
-      id: 'ai2',
-      title: 'Adjust lighting conditions',
-      description: 'Consider adding supplemental lighting for better detection accuracy',
-      completed: false,
-    },
-    {
-      id: 'ai3',
-      title: 'Review detection zones',
-      description: 'Current zones may overlap, consider consolidating',
-      completed: true,
-    },
-    {
-      id: 'ai4',
-      title: 'Calibrate for peak hours',
-      description: 'Fine-tune sensitivity for high-traffic periods',
-      completed: false,
-    },
-    {
-      id: 'ai5',
-      title: 'Enable advanced analytics',
-      description: 'System is ready for object classification and tracking',
-      completed: false,
-    },
-  ]);
+  const [checklists, setChecklists] = useState<ChecklistItem[]>([]);
+  const [aiChecklists, setAiChecklists] = useState<ChecklistItem[]>([]);
+  const [expandedChecklist, setExpandedChecklist] = useState<string | null>(null);
+  const [checklistComments, setChecklistComments] = useState<Record<string, ChecklistComment[]>>({});
+  const [newComment, setNewComment] = useState<string>('');
+  const [loadingComments, setLoadingComments] = useState<string | null>(null);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [checklistType, setChecklistType] = useState<'regular' | 'ai'>('regular');
   const [newChecklistItem, setNewChecklistItem] = useState({ title: '', description: '' });
@@ -158,6 +120,11 @@ export function ObjectiveDetailsPage() {
 
     setIsLoading(true);
     try {
+      // Initialize checklist database if needed
+      await initChecklistDatabase();
+      // Initialize ROI comment database
+      await initROICommentDatabase();
+      
       // Load pilot
       const pilotData = await getPilotById(pilotId);
       if (!pilotData) {
@@ -224,6 +191,14 @@ export function ObjectiveDetailsPage() {
           }
         }
       }
+      
+      // Load checklists for this objective
+      const checklistsData = await getChecklistsByObjective(objectiveId);
+      console.log('Loaded checklists for objective', objectiveId, ':', checklistsData);
+      setChecklists(checklistsData.filter(c => c.type === 'regular'));
+      setAiChecklists(checklistsData.filter(c => c.type === 'ai'));
+      console.log('Regular checklists:', checklistsData.filter(c => c.type === 'regular'));
+      console.log('AI checklists:', checklistsData.filter(c => c.type === 'ai'));
     } catch (error) {
       console.error('Error loading objective details:', error);
       toast.error('Failed to load objective details');
@@ -464,6 +439,8 @@ export function ObjectiveDetailsPage() {
     setHasUnsavedChanges(true);
   };
 
+  // @ts-ignore - Kept for future use
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDrawingUpdate = async (drawingId: string, updates: Partial<ROIDrawing>) => {
     if (!selectedProfileId) return;
 
@@ -489,10 +466,6 @@ export function ObjectiveDetailsPage() {
       updates,
     }]);
     setHasUnsavedChanges(true);
-
-    if (updates.comment !== undefined) {
-      setShowCommentPopover(false);
-    }
   };
 
   const handleDeleteDrawing = async () => {
@@ -630,71 +603,198 @@ export function ObjectiveDetailsPage() {
     toast.success('Changes discarded');
   };
 
-  const handleCanvasClick = (point: { x: number; y: number }) => {
+  // ROI Comment handlers - Figma-style
+  const onCanvasClick = async (point: { x: number; y: number }) => {
+    // When a shape is clicked in select mode, show comment panel
     if (selectedDrawing && activeTool === 'select') {
-      // Open comment popover
-      setCommentPosition(point);
-      setCommentText(selectedDrawing.comment || '');
-      setShowCommentPopover(true);
+      setSelectedShapeForComment(selectedDrawing);
+      // Store viewport coordinates for positioning
+      setCommentPanelPosition(point);
+      setShowCommentPanel(true);
+      
+      // Load comments for this shape
+      setLoadingROIComments(true);
+      try {
+        const comments = await getCommentsByShape(selectedDrawing.id);
+        setRoiComments(comments);
+      } catch (error) {
+        console.error('Failed to load ROI comments:', error);
+        toast.error('Failed to load comments');
+      } finally {
+        setLoadingROIComments(false);
+      }
     }
   };
 
-  const handleSaveComment = () => {
-    if (!selectedDrawing) return;
-    handleDrawingUpdate(selectedDrawing.id, { comment: commentText });
+  const handleAddROIComment = async () => {
+    if (!newROIComment.trim() || !selectedShapeForComment) return;
+    if (!authState.user || !pilotId || !objectiveId || !selectedCamera) return;
+
+    // Find the shape's profile
+    let shapeProfile: ROIProfile | null = null;
+    for (const profile of roiProfiles) {
+      if (profile.shapes.some(s => s.id === selectedShapeForComment.id)) {
+        shapeProfile = profile;
+        break;
+      }
+    }
+
+    if (!shapeProfile) return;
+
+    try {
+      const comment = await addROIComment({
+        shapeId: selectedShapeForComment.id,
+        profileId: shapeProfile.id,
+        objectiveId,
+        cameraId: selectedCamera.id,
+        pilotId,
+        userId: authState.user.id.toString(),
+        userName: authState.user.name,
+        content: newROIComment,
+      });
+
+      // Update local state
+      setRoiComments(prev => [...prev, comment]);
+      
+      setNewROIComment('');
+      toast.success('Comment added');
+    } catch (error) {
+      console.error('Failed to add ROI comment:', error);
+      toast.error('Failed to add comment');
+    }
   };
 
-  const handleAddChecklistItem = () => {
+  const handleAddChecklistItem = async () => {
     if (!newChecklistItem.title.trim()) {
       toast.error('Please enter a title');
       return;
     }
 
-    const newItem: ChecklistItem = {
-      id: Date.now().toString(),
-      title: newChecklistItem.title,
-      description: newChecklistItem.description,
-      completed: false,
-    };
+    if (!objectiveId || !authState.user) return;
 
-    if (checklistType === 'regular') {
-      setChecklists([...checklists, newItem]);
-    } else {
-      setAiChecklists([...aiChecklists, newItem]);
-    }
+    try {
+      const newItem = await createChecklist(
+        objectiveId,
+        newChecklistItem.title,
+        newChecklistItem.description,
+        checklistType,
+        authState.user.email
+      );
 
-    setNewChecklistItem({ title: '', description: '' });
-    setShowChecklistModal(false);
-    toast.success('Checklist item added');
-  };
+      if (checklistType === 'regular') {
+        setChecklists([...checklists, newItem]);
+      } else {
+        setAiChecklists([...aiChecklists, newItem]);
+      }
 
-  const handleToggleChecklistItem = (id: string, type: 'regular' | 'ai') => {
-    if (type === 'regular') {
-      setChecklists(checklists.map(item => 
-        item.id === id ? { ...item, completed: !item.completed } : item
-      ));
-    } else {
-      setAiChecklists(aiChecklists.map(item => 
-        item.id === id ? { ...item, completed: !item.completed } : item
-      ));
+      setNewChecklistItem({ title: '', description: '' });
+      setShowChecklistModal(false);
+      toast.success('Checklist item added');
+    } catch (error) {
+      console.error('Error creating checklist:', error);
+      toast.error('Failed to add checklist item');
     }
   };
 
-  const handleDeleteChecklistItem = (id: string, type: 'regular' | 'ai') => {
-    if (type === 'regular') {
-      setChecklists(checklists.filter(item => item.id !== id));
-    } else {
-      setAiChecklists(aiChecklists.filter(item => item.id !== id));
+  const handleToggleChecklistItem = async (id: string, type: 'regular' | 'ai') => {
+    const item = type === 'regular' 
+      ? checklists.find(c => c.id === id)
+      : aiChecklists.find(c => c.id === id);
+    
+    if (!item) return;
+
+    try {
+      await updateChecklist(id, { completed: !item.completed });
+      
+      if (type === 'regular') {
+        setChecklists(checklists.map(c => 
+          c.id === id ? { ...c, completed: !c.completed } : c
+        ));
+      } else {
+        setAiChecklists(aiChecklists.map(c => 
+          c.id === id ? { ...c, completed: !c.completed } : c
+        ));
+      }
+    } catch (error) {
+      console.error('Error updating checklist:', error);
+      toast.error('Failed to update checklist item');
     }
-    toast.success('Checklist item deleted');
+  };
+
+  const handleDeleteChecklistItem = async (id: string, type: 'regular' | 'ai') => {
+    try {
+      await deleteChecklist(id);
+      
+      if (type === 'regular') {
+        setChecklists(checklists.filter(item => item.id !== id));
+      } else {
+        setAiChecklists(aiChecklists.filter(item => item.id !== id));
+      }
+      
+      toast.success('Checklist item deleted');
+    } catch (error) {
+      console.error('Error deleting checklist:', error);
+      toast.error('Failed to delete checklist item');
+    }
+  };
+
+  const handleToggleChecklistComments = async (checklistId: string) => {
+    if (expandedChecklist === checklistId) {
+      setExpandedChecklist(null);
+      return;
+    }
+
+    setExpandedChecklist(checklistId);
+    
+    // Load comments if not already loaded
+    if (!checklistComments[checklistId]) {
+      setLoadingComments(checklistId);
+      try {
+        const comments = await getCommentsByChecklist(checklistId);
+        setChecklistComments(prev => ({ ...prev, [checklistId]: comments }));
+      } catch (error) {
+        console.error('Error loading comments:', error);
+        toast.error('Failed to load comments');
+      } finally {
+        setLoadingComments(null);
+      }
+    }
+  };
+
+  const handleAddComment = async (checklistId: string) => {
+    if (!newComment.trim() || !authState.user || !objectiveId || !pilotId) return;
+
+    try {
+      const comment = await addChecklistComment({
+        checklistId,
+        objectiveId,
+        pilotId,
+        content: newComment,
+        userId: authState.user.email,
+        userName: authState.user.name,
+      });
+
+      setChecklistComments(prev => ({
+        ...prev,
+        [checklistId]: [...(prev[checklistId] || []), comment],
+      }));
+
+      setNewComment('');
+      toast.success('Comment added');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error('Failed to add comment');
+    }
   };
 
   const handleDrawingSelect = (drawing: ROIDrawing | null, profileId: string | null) => {
     setSelectedDrawing(drawing);
     setSelectedProfileId(profileId);
     
+    // Close comment panel when deselecting
     if (!drawing) {
-      setShowCommentPopover(false);
+      setShowCommentPanel(false);
+      setSelectedShapeForComment(null);
     }
   };
 
@@ -703,6 +803,8 @@ export function ObjectiveDetailsPage() {
     
     if (tool !== 'select') {
       setSelectedDrawing(null);
+      setShowCommentPanel(false);
+      setSelectedShapeForComment(null);
     }
   };
 
@@ -779,75 +881,72 @@ export function ObjectiveDetailsPage() {
           </div>
         </motion.div>
 
-        {/* Use Case Section */}
+        {/* Use Case and Success Criteria Side by Side */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"
         >
-          <div className="border-b border-gray-200 px-6 py-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Use Case</h2>
-                <p className="text-sm text-gray-600 mt-1">Describe the objective's use case and purpose</p>
+          {/* Use Case Section */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="border-b border-gray-200 px-6 py-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Use Case</h2>
+                  <p className="text-sm text-gray-600 mt-1">Describe the objective's use case and purpose</p>
+                </div>
+                {!isEditingUsecase && usecase && (
+                  <button
+                    onClick={() => setIsEditingUsecase(true)}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
-              {!isEditingUsecase && usecase && (
-                <button
-                  onClick={() => setIsEditingUsecase(true)}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
-                >
-                  Edit
-                </button>
+            </div>
+
+            <div className="p-6">
+              {isEditingUsecase || !usecase ? (
+                <div className="space-y-3">
+                  <textarea
+                    value={usecase}
+                    onChange={(e) => setUsecase(e.target.value)}
+                    placeholder="e.g., Monitor employee safety compliance in warehouse loading dock area..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                    rows={3}
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={handleSaveUsecase} size="sm">
+                      Save Use Case
+                    </Button>
+                    {usecase && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setUsecase(objective?.usecase || '');
+                          setIsEditingUsecase(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-blue-200 rounded-xl p-4">
+                  <p className="text-sm text-gray-800">{usecase}</p>
+                </div>
               )}
             </div>
           </div>
 
-          <div className="p-6">
-            {isEditingUsecase || !usecase ? (
-              <div className="space-y-3">
-                <textarea
-                  value={usecase}
-                  onChange={(e) => setUsecase(e.target.value)}
-                  placeholder="e.g., Monitor employee safety compliance in warehouse loading dock area..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
-                  rows={3}
-                  autoFocus
-                />
-                <div className="flex gap-2">
-                  <Button onClick={handleSaveUsecase} size="sm">
-                    Save Use Case
-                  </Button>
-                  {usecase && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setUsecase(objective?.usecase || '');
-                        setIsEditingUsecase(false);
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-blue-200 rounded-xl p-4">
-                <p className="text-sm text-gray-800">{usecase}</p>
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Success Criteria Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.06 }}
-          className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6"
-        >
-          <div className="border-b border-gray-200 px-6 py-5">
+          {/* Success Criteria Section */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="border-b border-gray-200 px-6 py-5">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">Success Criteria</h2>
@@ -991,6 +1090,7 @@ export function ObjectiveDetailsPage() {
               </div>
             )}
           </div>
+        </div>
         </motion.div>
 
         {/* Camera Frame ROI Setup Section */}
@@ -1288,17 +1388,12 @@ export function ObjectiveDetailsPage() {
 
                                     {/* Undo Button and Unsaved Changes Indicator */}
                                     {activeProfile && activeProfile.shapes.length > 0 && (
-                                      <div className="flex justify-between items-center">
-                                        <div className="flex items-center gap-2">
-                                          <div className="text-xs text-gray-500 italic">
-                                            💡 Tip: Click on a shape in <strong>Select mode</strong> to add comments
-                                          </div>
-                                          {hasUnsavedChanges && (
-                                            <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full border border-orange-300">
-                                              {pendingChanges.length} unsaved change{pendingChanges.length !== 1 ? 's' : ''}
-                                            </span>
-                                          )}
-                                        </div>
+                                      <div className="flex justify-end items-center gap-2">
+                                        {hasUnsavedChanges && (
+                                          <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full border border-orange-300">
+                                            {pendingChanges.length} unsaved change{pendingChanges.length !== 1 ? 's' : ''}
+                                          </span>
+                                        )}
                                         <button
                                           onClick={handleUndo}
                                           className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
@@ -1317,18 +1412,134 @@ export function ObjectiveDetailsPage() {
                                       </div>
                                     )}
 
-                                    {/* Canvas */}
-                                    <ROICanvas
-                                      frameUrl={selectedFrame.fileUrl}
-                                      profiles={roiProfiles}
-                                      activeProfile={activeProfile}
-                                      activeTool={activeTool}
-                                      onDrawingComplete={handleDrawingComplete}
-                                      onDrawingSelect={handleDrawingSelect}
-                                      selectedDrawing={selectedDrawing}
-                                      selectedColor={selectedColor}
-                                      onCanvasClick={handleCanvasClick}
-                                    />
+                                    {/* Canvas with relative positioning for comment panel */}
+                                    <div className="relative">
+                                      <ROICanvas
+                                        frameUrl={selectedFrame.fileUrl}
+                                        profiles={roiProfiles}
+                                        activeProfile={activeProfile}
+                                        activeTool={activeTool}
+                                        onDrawingComplete={handleDrawingComplete}
+                                        onDrawingSelect={handleDrawingSelect}
+                                        selectedDrawing={selectedDrawing}
+                                        selectedColor={selectedColor}
+                                        onCanvasClick={onCanvasClick}
+                                      />
+
+                                      {/* Figma-style Comment Panel */}
+                                      {showCommentPanel && selectedShapeForComment && (
+                                        <div
+                                          className="fixed z-50 bg-white rounded-lg shadow-2xl border border-gray-300 w-80"
+                                          style={{
+                                            left: `${Math.min(commentPanelPosition.x + 20, window.innerWidth - 340)}px`,
+                                            top: `${Math.max(80, Math.min(commentPanelPosition.y - 100, window.innerHeight - 500))}px`,
+                                          }}
+                                        >
+                                          {/* Panel Header */}
+                                          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                                            <div className="flex items-center gap-2">
+                                              <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                              </svg>
+                                              <h4 className="text-sm font-semibold text-gray-900">
+                                                {selectedShapeForComment.type === 'rectangle' ? 'Rectangle' :
+                                                 selectedShapeForComment.type === 'circle' ? 'Circle' :
+                                                 selectedShapeForComment.type === 'polygon' ? 'Polygon' : 'Shape'} Comments
+                                              </h4>
+                                              <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-medium rounded">
+                                                {roiComments.length}
+                                              </span>
+                                            </div>
+                                            <button
+                                              onClick={() => {
+                                                setShowCommentPanel(false);
+                                                setSelectedShapeForComment(null);
+                                              }}
+                                              className="text-gray-400 hover:text-gray-600 transition-colors"
+                                            >
+                                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                              </svg>
+                                            </button>
+                                          </div>
+
+                                          {/* Comments List */}
+                                          <div className="p-4 max-h-96 overflow-y-auto space-y-3">
+                                            {loadingROIComments ? (
+                                              <div className="flex items-center justify-center py-8">
+                                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                                              </div>
+                                            ) : roiComments.length === 0 ? (
+                                              <div className="text-center py-8">
+                                                <svg className="w-12 h-12 text-gray-300 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                                </svg>
+                                                <p className="text-sm text-gray-500">No comments yet</p>
+                                                <p className="text-xs text-gray-400 mt-1">Be the first to comment on this shape</p>
+                                              </div>
+                                            ) : (
+                                              roiComments.map((comment) => (
+                                                <div key={comment.id} className="flex gap-2.5">
+                                                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-sm">
+                                                    <span className="text-xs font-bold text-white">
+                                                      {comment.userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                                                    </span>
+                                                  </div>
+                                                  <div className="flex-1 min-w-0 bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                                    <div className="flex items-baseline gap-2 mb-1">
+                                                      <span className="text-xs font-semibold text-gray-900">
+                                                        {comment.userName}
+                                                      </span>
+                                                      <span className="text-[10px] text-gray-500">
+                                                        {new Date(comment.createdAt).toLocaleDateString('en-US', {
+                                                          month: 'short',
+                                                          day: 'numeric',
+                                                          hour: '2-digit',
+                                                          minute: '2-digit'
+                                                        })}
+                                                      </span>
+                                                    </div>
+                                                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                                      {comment.content}
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                              ))
+                                            )}
+                                          </div>
+
+                                          {/* Add Comment Form */}
+                                          <div className="p-4 border-t border-gray-200 bg-gray-50">
+                                            <div className="flex gap-2">
+                                              <input
+                                                type="text"
+                                                value={newROIComment}
+                                                onChange={(e) => setNewROIComment(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                  if (e.key === 'Enter' && !e.shiftKey && newROIComment.trim()) {
+                                                    e.preventDefault();
+                                                    handleAddROIComment();
+                                                  }
+                                                }}
+                                                placeholder="Add a comment..."
+                                                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+                                                autoFocus
+                                              />
+                                              <button
+                                                onClick={handleAddROIComment}
+                                                disabled={!newROIComment.trim()}
+                                                className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
+                                              >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                                </svg>
+                                                Send
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
 
                                     {/* Other Camera Frame Options at Bottom */}
                                     {selectedCamera.frames.length > 1 && (
@@ -1399,35 +1610,123 @@ export function ObjectiveDetailsPage() {
                             {checklists.map((item) => (
                               <div
                                 key={item.id}
-                                className="group bg-gray-50 hover:bg-gray-100 rounded-lg p-3 transition-colors"
+                                className="group bg-gray-50 rounded-lg border border-gray-200 overflow-hidden transition-all"
                               >
-                                <div className="flex items-start gap-3">
-                                  <input
-                                    type="checkbox"
-                                    checked={item.completed}
-                                    onChange={() => handleToggleChecklistItem(item.id, 'regular')}
-                                    className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className={`text-sm font-medium ${item.completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-                                      {item.title}
-                                    </h4>
-                                    {item.description && (
-                                      <p className={`text-xs mt-1 ${item.completed ? 'line-through text-gray-400' : 'text-gray-600'}`}>
-                                        {item.description}
-                                      </p>
-                                    )}
+                                <div className="hover:bg-gray-100 p-3 transition-colors">
+                                  <div className="flex items-start gap-3">
+                                    <input
+                                      type="checkbox"
+                                      checked={item.completed}
+                                      onChange={() => handleToggleChecklistItem(item.id, 'regular')}
+                                      className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className={`text-sm font-medium ${item.completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                                        {item.title}
+                                      </h4>
+                                      {item.description && (
+                                        <p className={`text-xs mt-1 ${item.completed ? 'line-through text-gray-400' : 'text-gray-600'}`}>
+                                          {item.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => handleToggleChecklistComments(item.id)}
+                                        className="text-gray-500 hover:text-blue-600 p-1.5 transition-colors relative"
+                                        title="Comments"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                        </svg>
+                                        {checklistComments[item.id] && checklistComments[item.id].length > 0 && (
+                                          <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                                            {checklistComments[item.id].length}
+                                          </span>
+                                        )}
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteChecklistItem(item.id, 'regular')}
+                                        className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-700 p-1.5 transition-opacity"
+                                        title="Delete item"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                      </button>
+                                    </div>
                                   </div>
-                                  <button
-                                    onClick={() => handleDeleteChecklistItem(item.id, 'regular')}
-                                    className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-700 p-1 transition-opacity"
-                                    title="Delete item"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                  </button>
                                 </div>
+
+                                {/* Comments Section */}
+                                <AnimatePresence>
+                                  {expandedChecklist === item.id && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: 'auto', opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      transition={{ duration: 0.2 }}
+                                      className="border-t border-gray-200 bg-white"
+                                    >
+                                      <div className="p-3 space-y-2 max-h-60 overflow-y-auto">
+                                        {loadingComments === item.id ? (
+                                          <div className="flex justify-center py-3">
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                                          </div>
+                                        ) : checklistComments[item.id] && checklistComments[item.id].length > 0 ? (
+                                          checklistComments[item.id].map((comment) => (
+                                            <div key={comment.id} className="bg-gray-50 rounded-lg p-2 text-xs">
+                                              <div className="flex items-start gap-2">
+                                                <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-semibold text-[10px] flex-shrink-0">
+                                                  {comment.userName.split(' ').map(n => n[0]).join('')}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                  <div className="flex items-baseline gap-2 mb-1">
+                                                    <span className="font-semibold text-gray-900">{comment.userName}</span>
+                                                    <span className="text-gray-400 text-[10px]">
+                                                      {new Date(comment.createdAt).toLocaleDateString('en-US', { 
+                                                        month: 'short', 
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                      })}
+                                                    </span>
+                                                  </div>
+                                                  <p className="text-gray-700 break-words">{comment.content}</p>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <p className="text-xs text-gray-500 text-center py-2">No comments yet</p>
+                                        )}
+                                        
+                                        {/* Add Comment Input */}
+                                        <div className="flex gap-2 pt-1">
+                                          <input
+                                            type="text"
+                                            value={expandedChecklist === item.id ? newComment : ''}
+                                            onChange={(e) => setNewComment(e.target.value)}
+                                            onKeyPress={(e) => {
+                                              if (e.key === 'Enter' && expandedChecklist === item.id) {
+                                                handleAddComment(item.id);
+                                              }
+                                            }}
+                                            placeholder="Add a comment..."
+                                            className="flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                                          />
+                                          <button
+                                            onClick={() => handleAddComment(item.id)}
+                                            disabled={!newComment.trim()}
+                                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-medium rounded transition-colors"
+                                          >
+                                            Send
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
                               </div>
                             ))}
                           </div>
@@ -1463,35 +1762,123 @@ export function ObjectiveDetailsPage() {
                             {aiChecklists.map((item) => (
                               <div
                                 key={item.id}
-                                className="group bg-purple-50 hover:bg-purple-100 rounded-lg p-3 transition-colors"
+                                className="group bg-purple-50 rounded-lg border border-purple-200 overflow-hidden transition-all"
                               >
-                                <div className="flex items-start gap-3">
-                                  <input
-                                    type="checkbox"
-                                    checked={item.completed}
-                                    onChange={() => handleToggleChecklistItem(item.id, 'ai')}
-                                    className="mt-1 w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className={`text-sm font-medium ${item.completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-                                      {item.title}
-                                    </h4>
-                                    {item.description && (
-                                      <p className={`text-xs mt-1 ${item.completed ? 'line-through text-gray-400' : 'text-gray-600'}`}>
-                                        {item.description}
-                                      </p>
-                                    )}
+                                <div className="hover:bg-purple-100 p-3 transition-colors">
+                                  <div className="flex items-start gap-3">
+                                    <input
+                                      type="checkbox"
+                                      checked={item.completed}
+                                      onChange={() => handleToggleChecklistItem(item.id, 'ai')}
+                                      className="mt-1 w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className={`text-sm font-medium ${item.completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                                        {item.title}
+                                      </h4>
+                                      {item.description && (
+                                        <p className={`text-xs mt-1 ${item.completed ? 'line-through text-gray-400' : 'text-gray-600'}`}>
+                                          {item.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => handleToggleChecklistComments(item.id)}
+                                        className="text-gray-500 hover:text-purple-600 p-1.5 transition-colors relative"
+                                        title="Comments"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                        </svg>
+                                        {checklistComments[item.id] && checklistComments[item.id].length > 0 && (
+                                          <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                                            {checklistComments[item.id].length}
+                                          </span>
+                                        )}
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteChecklistItem(item.id, 'ai')}
+                                        className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-700 p-1.5 transition-opacity"
+                                        title="Delete item"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                      </button>
+                                    </div>
                                   </div>
-                                  <button
-                                    onClick={() => handleDeleteChecklistItem(item.id, 'ai')}
-                                    className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-700 p-1 transition-opacity"
-                                    title="Delete item"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                  </button>
                                 </div>
+
+                                {/* Comments Section */}
+                                <AnimatePresence>
+                                  {expandedChecklist === item.id && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: 'auto', opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      transition={{ duration: 0.2 }}
+                                      className="border-t border-purple-200 bg-white"
+                                    >
+                                      <div className="p-3 space-y-2 max-h-60 overflow-y-auto">
+                                        {loadingComments === item.id ? (
+                                          <div className="flex justify-center py-3">
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
+                                          </div>
+                                        ) : checklistComments[item.id] && checklistComments[item.id].length > 0 ? (
+                                          checklistComments[item.id].map((comment) => (
+                                            <div key={comment.id} className="bg-purple-50 rounded-lg p-2 text-xs">
+                                              <div className="flex items-start gap-2">
+                                                <div className="w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-semibold text-[10px] flex-shrink-0">
+                                                  {comment.userName.split(' ').map(n => n[0]).join('')}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                  <div className="flex items-baseline gap-2 mb-1">
+                                                    <span className="font-semibold text-gray-900">{comment.userName}</span>
+                                                    <span className="text-gray-400 text-[10px]">
+                                                      {new Date(comment.createdAt).toLocaleDateString('en-US', { 
+                                                        month: 'short', 
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                      })}
+                                                    </span>
+                                                  </div>
+                                                  <p className="text-gray-700 break-words">{comment.content}</p>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <p className="text-xs text-gray-500 text-center py-2">No comments yet</p>
+                                        )}
+                                        
+                                        {/* Add Comment Input */}
+                                        <div className="flex gap-2 pt-1">
+                                          <input
+                                            type="text"
+                                            value={expandedChecklist === item.id ? newComment : ''}
+                                            onChange={(e) => setNewComment(e.target.value)}
+                                            onKeyPress={(e) => {
+                                              if (e.key === 'Enter' && expandedChecklist === item.id) {
+                                                handleAddComment(item.id);
+                                              }
+                                            }}
+                                            placeholder="Add a comment..."
+                                            className="flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-purple-500 focus:border-transparent"
+                                          />
+                                          <button
+                                            onClick={() => handleAddComment(item.id)}
+                                            disabled={!newComment.trim()}
+                                            className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-medium rounded transition-colors"
+                                          >
+                                            Send
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
                               </div>
                             ))}
                           </div>
@@ -1520,73 +1907,6 @@ export function ObjectiveDetailsPage() {
         existingProfiles={roiProfiles}
         maxProfiles={10}
       />
-
-      {/* Comment Popover */}
-      {showCommentPopover && commentPosition && selectedDrawing && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/20 z-40"
-            onClick={() => setShowCommentPopover(false)}
-          />
-          
-          {/* Popover */}
-          <div
-            className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-4"
-            style={{
-              left: `${commentPosition.x}px`,
-              top: `${commentPosition.y}px`,
-              width: '300px',
-              transform: 'translate(-50%, 10px)',
-              maxHeight: '400px',
-              overflow: 'auto',
-            }}
-          >
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-gray-900">Shape Comment</h4>
-                <button
-                  onClick={() => setShowCommentPopover(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              </div>
-              
-              <textarea
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Enter comment for this ROI shape..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
-                rows={3}
-                autoFocus
-              />
-              
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSaveComment}
-                  className="flex-1"
-                >
-                  Save
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCommentPopover(false)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
 
       {/* Checklist Modal */}
       {showChecklistModal && (

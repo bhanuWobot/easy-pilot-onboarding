@@ -40,9 +40,60 @@ import type { AssetCategory } from "../types/asset";
 import { getObjectiveStatusBadgeStyle, getObjectiveStatusDisplayText } from "../types/objective";
 import { getCameraStatusBadgeStyle } from "../types/camera";
 import { getAssetCategoryIcon, getAssetCategoryColor } from "../types/asset";
-import { getRemarkTypeIcon } from "../types/remark";
+// import { getRemarkTypeIcon } from "../types/remark";
 import { getStatusBadgeStyle, type PilotStatus } from "../types/pilot";
 import toast from "react-hot-toast";
+import jsPDF from "jspdf";
+
+// Helper functions for activity timeline
+function getActivityEmoji(type: string): string {
+  const emojiMap: Record<string, string> = {
+    note: '📝',
+    issue: '⚠️',
+    update: '✨',
+    resolution: '✅',
+    activity: '📌',
+    objective: '🎯',
+    camera: '📷',
+    asset: '📎',
+  };
+  return emojiMap[type] || '📌';
+}
+
+function getActivityColor(type: string): string {
+  const colorMap: Record<string, string> = {
+    note: 'bg-blue-500',
+    issue: 'bg-red-500',
+    update: 'bg-green-500',
+    resolution: 'bg-purple-500',
+    activity: 'bg-gray-500',
+    objective: 'bg-indigo-500',
+    camera: 'bg-orange-500',
+    asset: 'bg-cyan-500',
+  };
+  return colorMap[type] || 'bg-gray-500';
+}
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+function formatRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
 type Tab = "overview" | "objectives" | "locations" | "assets" | "activity" | "cameras";
 
@@ -92,6 +143,18 @@ export function PilotDetailsPage() {
     category: "other" as AssetCategory,
     description: "",
     remarks: "",
+  });
+
+  // Move asset to camera modal state
+  const [showMoveAssetModal, setShowMoveAssetModal] = useState(false);
+  const [selectedAssetToMove, setSelectedAssetToMove] = useState<Asset | null>(null);
+  const [selectedCameraForMove, setSelectedCameraForMove] = useState<string | null>(null);
+
+  // Edit pilot details modal state
+  const [showEditPilotModal, setShowEditPilotModal] = useState(false);
+  const [editPilotData, setEditPilotData] = useState({
+    startDate: "",
+    expectedEndDate: "",
   });
 
   // Load pilot data
@@ -388,6 +451,46 @@ export function PilotDetailsPage() {
     link.click();
   };
 
+  const handleMoveAssetToCamera = async () => {
+    if (!selectedAssetToMove || !selectedCameraForMove || !authState.user) return;
+
+    // Only allow moving image assets
+    if (!selectedAssetToMove.fileType.startsWith("image/")) {
+      toast.error("Only image assets can be moved to camera frames");
+      return;
+    }
+
+    try {
+      // Add the asset as a frame to the selected camera
+      const result = await addFrameToCamera(selectedCameraForMove, {
+        fileName: selectedAssetToMove.fileName,
+        fileUrl: selectedAssetToMove.fileUrl,
+        fileSize: selectedAssetToMove.fileSize,
+        isPrimary: false,
+      });
+
+      if (result) {
+        // Update cameras state
+        setCameras(cameras.map((c) => (c.id === selectedCameraForMove ? result : c)));
+        
+        // Delete the asset from assets
+        await deleteAsset(selectedAssetToMove.id, authState.user.email);
+        setAssets(assets.filter((a) => a.id !== selectedAssetToMove.id));
+        
+        toast.success(`Moved to camera frame successfully`);
+        setShowMoveAssetModal(false);
+        setSelectedAssetToMove(null);
+        setSelectedCameraForMove(null);
+        
+        // Reload data to reflect in activity
+        await loadPilotData();
+      }
+    } catch (error) {
+      console.error("Error moving asset to camera:", error);
+      toast.error("Failed to move asset to camera");
+    }
+  };
+
   const handleDeletePilot = async () => {
     if (
       !pilot ||
@@ -402,6 +505,200 @@ export function PilotDetailsPage() {
     } catch (error) {
       console.error("Error deleting pilot:", error);
       toast.error("Failed to delete pilot");
+    }
+  };
+
+  const handleUpdatePilotDates = async () => {
+    if (!pilot) return;
+
+    try {
+      await updatePilot(pilot.id, {
+        startDate: editPilotData.startDate,
+        expectedEndDate: editPilotData.expectedEndDate || undefined,
+      });
+      setPilot({
+        ...pilot,
+        startDate: editPilotData.startDate,
+        expectedEndDate: editPilotData.expectedEndDate || undefined,
+      });
+      setShowEditPilotModal(false);
+      toast.success("Pilot dates updated successfully");
+    } catch (error) {
+      console.error("Error updating pilot:", error);
+      toast.error("Failed to update pilot dates");
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!pilot) return;
+
+    try {
+      toast.loading("Generating PDF...", { id: "pdf-export" });
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      let yPosition = margin;
+
+      // Helper function to add text with word wrap
+      const addText = (text: string, fontSize: number, isBold: boolean = false) => {
+        pdf.setFontSize(fontSize);
+        pdf.setFont("helvetica", isBold ? "bold" : "normal");
+        const lines = pdf.splitTextToSize(text, pageWidth - 2 * margin);
+        
+        if (yPosition + (lines.length * fontSize * 0.35) > pageHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        
+        pdf.text(lines, margin, yPosition);
+        yPosition += lines.length * fontSize * 0.35 + 3;
+      };
+
+      const addSection = (title: string) => {
+        yPosition += 5;
+        if (yPosition > pageHeight - 30) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFillColor(59, 130, 246);
+        pdf.rect(margin, yPosition - 5, pageWidth - 2 * margin, 8, "F");
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(12);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(title, margin + 2, yPosition);
+        pdf.setTextColor(0, 0, 0);
+        yPosition += 10;
+      };
+
+      // Title
+      pdf.setFillColor(37, 99, 235);
+      pdf.rect(0, 0, pageWidth, 40, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(20);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(pilot.name, margin, 15);
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(pilot.company, margin, 25);
+      pdf.setFontSize(10);
+      pdf.text(`Status: ${pilot.status.toUpperCase()}`, margin, 32);
+      pdf.setTextColor(0, 0, 0);
+      yPosition = 50;
+
+      // Overview Section
+      addSection("PILOT OVERVIEW");
+      addText(`Contact: ${pilot.contactPerson} (${pilot.contactEmail})`, 10);
+      addText(`Phone: ${pilot.contactEmail}`, 10);
+      addText(`Location: ${pilot.locationName || "N/A"}`, 10);
+      addText(`Start Date: ${pilot.startDate ? new Date(pilot.startDate).toLocaleDateString() : "Not set"}`, 10);
+      addText(`Expected End Date: ${pilot.expectedEndDate ? new Date(pilot.expectedEndDate).toLocaleDateString() : "Not set"}`, 10);
+      addText(`Progress: ${progress}%`, 10, true);
+
+      // Objectives Section
+      if (objectives.length > 0) {
+        addSection("OBJECTIVES");
+        objectives.forEach((obj, index) => {
+          addText(`${index + 1}. ${obj.title}`, 10, true);
+          addText(`   Status: ${obj.status} | Priority: ${obj.priority} | Progress: ${obj.progress}%`, 9);
+          if (obj.description) {
+            addText(`   ${obj.description}`, 9);
+          }
+          yPosition += 2;
+        });
+      }
+
+      // Locations & Cameras Section
+      if (locations.length > 0) {
+        addSection("LOCATIONS & CAMERAS");
+        locations.forEach((location) => {
+          addText(`Location: ${location.name}`, 10, true);
+          addText(`   City/Region: ${location.cityRegion}`, 9);
+          
+          const locationCameras = cameras.filter(c => c.locationId === location.id);
+          if (locationCameras.length > 0) {
+            addText(`   Cameras (${locationCameras.length}):`, 9, true);
+            locationCameras.forEach((camera) => {
+              addText(`   - ${camera.name} [${camera.status}] (${camera.frames.length} frames)`, 9);
+              if (camera.notes) {
+                addText(`     Notes: ${camera.notes}`, 8);
+              }
+            });
+          }
+          yPosition += 3;
+        });
+      }
+
+      // Assets Section
+      if (assets.length > 0) {
+        addSection("ASSETS");
+        const assetsByCategory: Record<string, Asset[]> = {};
+        assets.forEach(asset => {
+          if (!assetsByCategory[asset.category]) {
+            assetsByCategory[asset.category] = [];
+          }
+          assetsByCategory[asset.category].push(asset);
+        });
+
+        Object.entries(assetsByCategory).forEach(([category, categoryAssets]) => {
+          addText(`${category.toUpperCase()} (${categoryAssets.length}):`, 10, true);
+          categoryAssets.forEach((asset) => {
+            addText(`- ${asset.title || asset.fileName}`, 9);
+            if (asset.description) {
+              addText(`  ${asset.description}`, 8);
+            }
+          });
+          yPosition += 2;
+        });
+      }
+
+      // Team Members Section
+      if (assignedUsers.length > 0) {
+        addSection("TEAM MEMBERS");
+        assignedUsers.forEach((user) => {
+          addText(`- ${user.name} (${user.email}) - ${user.role}`, 10);
+        });
+      }
+
+      // Activity Section
+      const systemRemarks = remarks.filter(r => r.isSystem).slice(0, 10);
+      if (systemRemarks.length > 0) {
+        addSection("RECENT ACTIVITY (Last 10)");
+        systemRemarks.forEach((remark) => {
+          const date = new Date(remark.createdAt);
+          addText(`${date.toLocaleDateString()} ${date.toLocaleTimeString()}`, 9, true);
+          addText(`${remark.text}`, 9);
+          yPosition += 2;
+        });
+      }
+
+      // Footer
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const totalPages = (pdf as any).internal.pages.length - 1;
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(128, 128, 128);
+        pdf.text(
+          `Generated on ${new Date().toLocaleDateString()} | Page ${i} of ${totalPages}`,
+          pageWidth / 2,
+          pageHeight - 10,
+          { align: "center" }
+        );
+      }
+
+      // Save the PDF
+      pdf.save(`${pilot.name.replace(/\s+/g, "_")}_Pilot_Report.pdf`);
+      toast.success("PDF exported successfully", { id: "pdf-export" });
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      toast.error("Failed to export PDF", { id: "pdf-export" });
     }
   };
 
@@ -427,8 +724,23 @@ export function PilotDetailsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          {/* Shareable Link Button at Top */}
+          {/* Action Buttons at Top */}
           <div className="mb-4 pb-4 border-b border-gray-200 flex justify-end gap-3">
+            <button
+              onClick={handleExportPDF}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+              title="Export pilot details as PDF"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              Export as PDF
+            </button>
             <button
               onClick={() => setShowSummaryModal(true)}
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
@@ -631,13 +943,59 @@ export function PilotDetailsPage() {
                           )}
                         </div>
                         <div className="bg-white rounded-lg p-4 border border-blue-100">
-                          <dt className="text-sm font-medium text-gray-600 mb-1">Start Date</dt>
+                          <div className="flex items-center justify-between mb-1">
+                            <dt className="text-sm font-medium text-gray-600">Start Date</dt>
+                            <button
+                              onClick={() => {
+                                setEditPilotData({
+                                  startDate: pilot.startDate,
+                                  expectedEndDate: pilot.expectedEndDate || "",
+                                });
+                                setShowEditPilotModal(true);
+                              }}
+                              className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                            >
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                              </svg>
+                              Edit
+                            </button>
+                          </div>
                           <dd className="text-base font-semibold text-gray-900">
                             {new Date(pilot.startDate).toLocaleDateString('en-US', { 
                               year: 'numeric', 
                               month: 'long', 
                               day: 'numeric' 
                             })}
+                          </dd>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 border border-blue-100">
+                          <div className="flex items-center justify-between mb-1">
+                            <dt className="text-sm font-medium text-gray-600">Expected End Date</dt>
+                            <button
+                              onClick={() => {
+                                setEditPilotData({
+                                  startDate: pilot.startDate,
+                                  expectedEndDate: pilot.expectedEndDate || "",
+                                });
+                                setShowEditPilotModal(true);
+                              }}
+                              className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                            >
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                              </svg>
+                              Edit
+                            </button>
+                          </div>
+                          <dd className="text-base font-semibold text-gray-900">
+                            {pilot.expectedEndDate 
+                              ? new Date(pilot.expectedEndDate).toLocaleDateString('en-US', { 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })
+                              : "Not set"}
                           </dd>
                         </div>
                         <div className="bg-white rounded-lg p-4 border border-blue-100">
@@ -1265,19 +1623,41 @@ export function PilotDetailsPage() {
                           <span className={`text-xs px-2 py-1 rounded border ${getAssetCategoryColor(asset.category)}`}>
                             {getAssetCategoryIcon(asset.category)} {asset.category}
                           </span>
-                          <button
-                            onClick={() => handleDeleteAsset(asset.id)}
-                            className="text-red-600 hover:text-red-700 p-1"
-                          >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </button>
+                          <div className="flex items-center gap-1">
+                            {asset.fileType.startsWith("image/") && (
+                              <button
+                                onClick={() => {
+                                  setSelectedAssetToMove(asset);
+                                  setShowMoveAssetModal(true);
+                                }}
+                                className="text-blue-600 hover:text-blue-700 p-1"
+                                title="Move to Camera Frame"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteAsset(asset.id)}
+                              className="text-red-600 hover:text-red-700 p-1"
+                              title="Delete Asset"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
 
                         {asset.fileType.startsWith("image/") && (
@@ -1343,27 +1723,82 @@ export function PilotDetailsPage() {
                   exit={{ opacity: 0, y: -10 }}
                   className="space-y-4"
                 >
-                  {remarks
-                    .filter((r) => r.isSystem)
-                    .map((remark) => {
-                      const user = users.find((u) => u.email === remark.createdBy);
-                      const userName = user ? user.name : remark.createdBy;
+                  {remarks.filter((r) => r.isSystem).length === 0 ? (
+                    <div className="text-center py-16">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Activity Yet</h3>
+                      <p className="text-gray-500">Activity will appear here as you work on this pilot</p>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      {/* Timeline line */}
+                      <div className="absolute left-[104px] top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-200 via-purple-200 to-pink-200"></div>
 
-                      return (
-                        <div key={remark.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                          <span className="text-xl">{getRemarkTypeIcon(remark.type)}</span>
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-900">
-                              <span className="font-medium text-blue-600">{userName}</span> {remark.text}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">{new Date(remark.createdAt).toLocaleString()}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  {remarks.filter((r) => r.isSystem).length === 0 && (
-                    <div className="text-center py-12">
-                      <p className="text-gray-500">No activity yet</p>
+                      <div className="space-y-6">
+                        {remarks
+                          .filter((r) => r.isSystem)
+                          .map((remark, index) => {
+                            const user = users.find((u) => u.email === remark.createdBy);
+                            const userName = user ? user.name : remark.createdBy.split('@')[0];
+                            const activityEmoji = getActivityEmoji(remark.type);
+                            const activityColor = getActivityColor(remark.type);
+
+                            return (
+                              <motion.div
+                                key={remark.id}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                                className="relative flex items-start gap-4"
+                              >
+                                {/* Accurate time on left */}
+                                <div className="w-20 flex-shrink-0 text-right pt-1">
+                                  <span className="text-xs font-medium text-gray-600">{formatDate(remark.createdAt)}</span>
+                                </div>
+
+                                {/* Timeline dot */}
+                                <div
+                                  className={`w-5 h-5 flex-shrink-0 rounded-full border-4 border-white shadow-lg ${activityColor} relative z-10`}
+                                ></div>
+
+                                {/* Activity card */}
+                                <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-300 transition-all">
+                                  <div className="p-4">
+                                    {/* Header with emoji and content */}
+                                    <div className="flex items-start gap-3 mb-3">
+                                      <span className="text-2xl flex-shrink-0 mt-0.5">{activityEmoji}</span>
+                                      <div className="flex-1">
+                                        <p className="text-gray-800 leading-relaxed">{remark.text}</p>
+                                      </div>
+                                    </div>
+
+                                    {/* Footer with user and relative time */}
+                                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                                          <span className="text-white text-xs font-semibold">
+                                            {userName.charAt(0).toUpperCase()}
+                                          </span>
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-700">{userName}</span>
+                                      </div>
+                                      <span className="text-xs text-gray-500">{formatRelativeTime(remark.createdAt)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                      </div>
                     </div>
                   )}
                 </motion.div>
@@ -1862,6 +2297,220 @@ export function PilotDetailsPage() {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Move Asset to Camera Modal */}
+      {showMoveAssetModal && selectedAssetToMove && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Move Asset to Camera Frame</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMoveAssetModal(false);
+                  setSelectedAssetToMove(null);
+                  setSelectedCameraForMove(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Asset Preview */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600 mb-3">Moving asset:</p>
+              <div className="flex items-center gap-4">
+                {selectedAssetToMove.fileType.startsWith("image/") && (
+                  <img
+                    src={selectedAssetToMove.fileUrl}
+                    alt={selectedAssetToMove.fileName}
+                    className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+                  />
+                )}
+                <div>
+                  <p className="font-medium text-gray-900">{selectedAssetToMove.fileName}</p>
+                  <p className="text-sm text-gray-500">{(selectedAssetToMove.fileSize / 1024).toFixed(1)} KB</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Camera Selection */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Select Camera to add this frame to:
+                </label>
+                
+                {locations.length > 0 ? (
+                  <div className="space-y-4">
+                    {locations.map((location) => {
+                      const locationCameras = cameras.filter((c) => c.locationId === location.id);
+                      if (locationCameras.length === 0) return null;
+
+                      return (
+                        <div key={location.id} className="border border-gray-200 rounded-lg p-4">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                            </svg>
+                            {location.name}
+                          </h4>
+                          <div className="space-y-2">
+                            {locationCameras.map((camera) => (
+                              <label
+                                key={camera.id}
+                                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                                  selectedCameraForMove === camera.id
+                                    ? "bg-blue-50 border-2 border-blue-500"
+                                    : "bg-white border border-gray-200 hover:border-blue-300"
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="camera"
+                                  value={camera.id}
+                                  checked={selectedCameraForMove === camera.id}
+                                  onChange={(e) => setSelectedCameraForMove(e.target.value)}
+                                  className="w-4 h-4 text-blue-600"
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                      />
+                                    </svg>
+                                    <span className="font-medium text-gray-900">{camera.name}</span>
+                                  </div>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {camera.frames.length} frame(s) • {camera.status}
+                                  </p>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No locations or cameras available.</p>
+                    <p className="text-sm mt-2">Please add cameras to locations first.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex gap-3">
+                <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                <div>
+                  <p className="text-sm font-medium text-yellow-800">Note</p>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    This will move the asset to the selected camera's frames and remove it from the assets list.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowMoveAssetModal(false);
+                  setSelectedAssetToMove(null);
+                  setSelectedCameraForMove(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleMoveAssetToCamera} disabled={!selectedCameraForMove}>
+                Move to Camera
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Pilot Details Modal */}
+      {showEditPilotModal && pilot && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Edit Pilot Dates</h2>
+              <button
+                type="button"
+                onClick={() => setShowEditPilotModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                <input
+                  type="date"
+                  value={editPilotData.startDate}
+                  onChange={(e) => setEditPilotData({ ...editPilotData, startDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Expected End Date</label>
+                <input
+                  type="date"
+                  value={editPilotData.expectedEndDate}
+                  onChange={(e) => setEditPilotData({ ...editPilotData, expectedEndDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">Optional: Leave empty if not determined yet</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setShowEditPilotModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleUpdatePilotDates}>
+                Update Dates
+              </Button>
             </div>
           </div>
         </div>

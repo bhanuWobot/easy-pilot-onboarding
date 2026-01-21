@@ -24,7 +24,7 @@ interface ROICanvasProps {
   onDrawingComplete: (drawing: Omit<ROIDrawing, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onDrawingSelect: (drawing: ROIDrawing | null, profileId: string | null) => void;
   selectedDrawing: ROIDrawing | null;
-  onCanvasClick: (point: Point) => void;
+  onCanvasClick?: (point: Point) => void;
 }
 
 export function ROICanvas({
@@ -609,8 +609,10 @@ export function ROICanvas({
       const clickedShape = findShapeAtPoint({ x, y });
       if (clickedShape) {
         onDrawingSelect(clickedShape.shape, clickedShape.profileId);
-        // Pass viewport coordinates for comment popover
-        onCanvasClick({ x: e.clientX, y: e.clientY });
+        // Pass viewport coordinates for comment popover (if handler exists)
+        if (onCanvasClick) {
+          onCanvasClick({ x: e.clientX, y: e.clientY });
+        }
       } else {
         onDrawingSelect(null, null);
       }

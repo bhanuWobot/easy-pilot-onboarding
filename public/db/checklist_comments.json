@@ -1,0 +1,222 @@
+[
+  {
+    "id": "cmt_001",
+    "checklistId": "ckl_001",
+    "objectiveId": "obj0000001",
+    "pilotId": "pilot00001",
+    "userId": "1",
+    "userName": "John Doe",
+    "content": "Confirmed all switches are PoE+ compatible with 30W per port capacity. Ready for installation.",
+    "createdAt": "2025-11-02T10:00:00.000Z"
+  },
+  {
+    "id": "cmt_002",
+    "checklistId": "ckl_003",
+    "objectiveId": "obj0000001",
+    "pilotId": "pilot00001",
+    "userId": "1",
+    "userName": "John Doe",
+    "content": "All cable runs completed. Used Cat6 shielded for better interference protection.",
+    "createdAt": "2025-11-03T16:30:00.000Z"
+  },
+  {
+    "id": "cmt_003",
+    "checklistId": "ckl_ai_001",
+    "objectiveId": "obj0000001",
+    "pilotId": "pilot00001",
+    "userId": "2",
+    "userName": "Sarah Wilson",
+    "content": "Good catch by AI. Camera 12 cable run is 115m. Adding a network switch midpoint.",
+    "createdAt": "2025-11-03T14:00:00.000Z"
+  },
+  {
+    "id": "cmt_004",
+    "checklistId": "ckl_007",
+    "objectiveId": "obj0000002",
+    "pilotId": "pilot00001",
+    "userId": "1",
+    "userName": "John Doe",
+    "content": "Location 2 installation complete. All cameras powered up and showing green status.",
+    "createdAt": "2025-11-12T17:00:00.000Z"
+  },
+  {
+    "id": "cmt_005",
+    "checklistId": "ckl_ai_002",
+    "objectiveId": "obj0000002",
+    "pilotId": "pilot00001",
+    "userId": "2",
+    "userName": "Sarah Wilson",
+    "content": "Adjusted camera 5 angle by 15 degrees. Coverage looks much better now.",
+    "createdAt": "2025-11-17T11:30:00.000Z"
+  },
+  {
+    "id": "cmt_006",
+    "checklistId": "ckl_ai_002",
+    "objectiveId": "obj0000002",
+    "pilotId": "pilot00001",
+    "userId": "1",
+    "userName": "John Doe",
+    "content": "Camera 12 needs repositioning. Will schedule a site visit next week.",
+    "createdAt": "2025-11-17T14:00:00.000Z"
+  },
+  {
+    "id": "cmt_007",
+    "checklistId": "ckl_012",
+    "objectiveId": "obj0000003",
+    "pilotId": "pilot00001",
+    "userId": "1",
+    "userName": "John Doe",
+    "content": "Created 3 admin accounts, 5 operator accounts, and 10 viewer accounts. Waiting for final approval.",
+    "createdAt": "2025-11-26T10:00:00.000Z"
+  },
+  {
+    "id": "cmt_008",
+    "checklistId": "ckl_013",
+    "objectiveId": "obj0000003",
+    "pilotId": "pilot00001",
+    "userId": "2",
+    "userName": "Sarah Wilson",
+    "content": "Motion detection zones configured for all cameras. Sensitivity set to medium for now.",
+    "createdAt": "2025-12-02T09:30:00.000Z"
+  },
+  {
+    "id": "cmt_009",
+    "checklistId": "ckl_ai_003",
+    "objectiveId": "obj0000003",
+    "pilotId": "pilot00001",
+    "userId": "1",
+    "userName": "John Doe",
+    "content": "AI recommendation makes sense. Storage upgrade approved - expanding to 45-day retention.",
+    "createdAt": "2025-12-06T11:15:00.000Z"
+  },
+  {
+    "id": "cmt_010",
+    "checklistId": "ckl_015",
+    "objectiveId": "obj0000004",
+    "pilotId": "pilot00001",
+    "userId": "2",
+    "userName": "Sarah Wilson",
+    "content": "Training sessions scheduled for Dec 22-23. Sent invites to 15 staff members.",
+    "createdAt": "2025-12-11T10:00:00.000Z"
+  },
+  {
+    "id": "cmt_011",
+    "checklistId": "ckl_ai_004",
+    "objectiveId": "obj0000005",
+    "pilotId": "pilot00002",
+    "userId": "1",
+    "userName": "John Doe",
+    "content": "Added 2 additional cameras to store 2 checkout area to eliminate blind spots.",
+    "createdAt": "2025-10-23T08:30:00.000Z"
+  },
+  {
+    "id": "cmt_012",
+    "checklistId": "ckl_023",
+    "objectiveId": "obj0000006",
+    "pilotId": "pilot00002",
+    "userId": "3",
+    "userName": "Mike Chen",
+    "content": "Dwell time zones set up for electronics and cosmetics sections. Will monitor for a week before fine-tuning.",
+    "createdAt": "2025-11-12T14:00:00.000Z"
+  },
+  {
+    "id": "cmt_013",
+    "checklistId": "ckl_ai_005",
+    "objectiveId": "obj0000006",
+    "pilotId": "pilot00002",
+    "userId": "1",
+    "userName": "John Doe",
+    "content": "Will adjust camera 3 height from 7ft to 9ft for better overhead counting angle.",
+    "createdAt": "2025-11-19T09:00:00.000Z"
+  },
+  {
+    "id": "cmt_014",
+    "checklistId": "ckl_027",
+    "objectiveId": "obj0000007",
+    "pilotId": "pilot00002",
+    "userId": "1",
+    "userName": "John Doe",
+    "content": "Initial tests show 98% correlation accuracy. Need to test edge cases like refunds and voids.",
+    "createdAt": "2025-11-22T11:30:00.000Z"
+  },
+  {
+    "id": "cmt_015",
+    "checklistId": "ckl_031",
+    "objectiveId": "obj0000008",
+    "pilotId": "pilot00003",
+    "userId": "2",
+    "userName": "Sarah Wilson",
+    "content": "Building department requested additional fire safety documentation. Preparing now.",
+    "createdAt": "2025-12-12T10:00:00.000Z"
+  },
+  {
+    "id": "cmt_016",
+    "checklistId": "ckl_ai_006",
+    "objectiveId": "obj0000009",
+    "pilotId": "pilot00003",
+    "userId": "4",
+    "userName": "Alex Rodriguez",
+    "content": "Implementing MFA using Google Authenticator for all admin accounts. Rollout next week.",
+    "createdAt": "2025-12-06T15:30:00.000Z"
+  },
+  {
+    "id": "cmt_017",
+    "checklistId": "ckl_038",
+    "objectiveId": "obj0000010",
+    "pilotId": "pilot00004",
+    "userId": "1",
+    "userName": "John Doe",
+    "content": "Alert system configured to send SMS and email to 3 staff members when violations detected.",
+    "createdAt": "2025-12-11T10:45:00.000Z"
+  },
+  {
+    "id": "cmt_018",
+    "checklistId": "ckl_ai_007",
+    "objectiveId": "obj0000010",
+    "pilotId": "pilot00004",
+    "userId": "3",
+    "userName": "Mike Chen",
+    "content": "Reduced sensitivity from 85% to 70% for evening hours. Testing for false positives.",
+    "createdAt": "2025-12-16T09:00:00.000Z"
+  },
+  {
+    "id": "cmt_019",
+    "checklistId": "ckl_041",
+    "objectiveId": "obj0000011",
+    "pilotId": "pilot00004",
+    "userId": "3",
+    "userName": "Mike Chen",
+    "content": "Peak hours analysis shows busiest times are 2-5 PM on weekends. Dashboard looks great!",
+    "createdAt": "2025-12-06T13:00:00.000Z"
+  },
+  {
+    "id": "cmt_020",
+    "checklistId": "ckl_044",
+    "objectiveId": "obj0000012",
+    "pilotId": "pilot00004",
+    "userId": "1",
+    "userName": "John Doe",
+    "content": "React Native prototype working well. Live view has ~2 second latency which is acceptable.",
+    "createdAt": "2025-12-03T11:30:00.000Z"
+  },
+  {
+    "id": "cmt_021",
+    "checklistId": "ckl_049",
+    "objectiveId": "obj0000013",
+    "pilotId": "pilot00004",
+    "userId": "3",
+    "userName": "Mike Chen",
+    "content": "Working on daily report template. Will include hourly breakdown and comparison to previous week.",
+    "createdAt": "2025-12-16T10:00:00.000Z"
+  },
+  {
+    "id": "cmt_022",
+    "checklistId": "ckl_ai_008",
+    "objectiveId": "obj0000013",
+    "pilotId": "pilot00004",
+    "userId": "1",
+    "userName": "John Doe",
+    "content": "Great point. Groups of 3+ are being undercounted. Will adjust the grouping threshold.",
+    "createdAt": "2025-12-19T14:15:00.000Z"
+  }
+]
