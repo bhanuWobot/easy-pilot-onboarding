@@ -1,0 +1,222 @@
+[
+  {
+    "id": "pc_001",
+    "pilotId": "pilot00001",
+    "userId": "1",
+    "userName": "John",
+    "content": "Great progress on the Austin location deployment! The team has completed the camera installations faster than expected.",
+    "createdAt": "2025-11-15T10:30:00.000Z"
+  },
+  {
+    "id": "pc_002",
+    "pilotId": "pilot00001",
+    "userId": "2",
+    "userName": "Graham Staniforth",
+    "content": "Thanks John! We're pleased with the timeline. Quick question - when can we expect the analytics dashboard to be live?",
+    "parentId": "pc_001",
+    "createdAt": "2025-11-15T14:20:00.000Z"
+  },
+  {
+    "id": "pc_003",
+    "pilotId": "pilot00001",
+    "userId": "1",
+    "userName": "John",
+    "content": "The analytics dashboard should be ready by end of this week. We're finalizing the custom reports you requested.",
+    "parentId": "pc_001",
+    "createdAt": "2025-11-15T16:45:00.000Z"
+  },
+  {
+    "id": "pc_004",
+    "pilotId": "pilot00001",
+    "userId": "3",
+    "userName": "Sarah Johnson",
+    "content": "I've uploaded the network documentation to the assets section. Please review and let me know if you need any clarifications.",
+    "createdAt": "2025-11-18T09:15:00.000Z"
+  },
+  {
+    "id": "pc_005",
+    "pilotId": "pilot00001",
+    "userId": "2",
+    "userName": "Graham Staniforth",
+    "content": "Reviewed the network docs. Looks comprehensive. One concern - the bandwidth allocation for location 2 might be tight during peak hours.",
+    "parentId": "pc_004",
+    "createdAt": "2025-11-18T11:30:00.000Z"
+  },
+  {
+    "id": "pc_006",
+    "pilotId": "pilot00001",
+    "userId": "1",
+    "userName": "John",
+    "content": "Can we schedule a demo call for the franchise owners next week? They're eager to see the system in action.",
+    "createdAt": "2025-12-01T08:00:00.000Z"
+  },
+  {
+    "id": "pc_007",
+    "pilotId": "pilot00001",
+    "userId": "3",
+    "userName": "Sarah Johnson",
+    "content": "I have availability on Tuesday or Thursday afternoons. Let me know what works for everyone.",
+    "parentId": "pc_006",
+    "createdAt": "2025-12-01T10:15:00.000Z"
+  },
+  {
+    "id": "pc_008",
+    "pilotId": "pilot00002",
+    "userId": "1",
+    "userName": "John",
+    "content": "Acme Corp deployment is looking solid! All 28 cameras are operational across the three San Francisco locations.",
+    "createdAt": "2025-10-20T11:00:00.000Z"
+  },
+  {
+    "id": "pc_009",
+    "pilotId": "pilot00002",
+    "userId": "3",
+    "userName": "Sarah Johnson",
+    "content": "The retail analytics features are performing really well. Customer heatmaps are providing valuable insights for store layout optimization.",
+    "createdAt": "2025-11-05T14:30:00.000Z"
+  },
+  {
+    "id": "pc_010",
+    "pilotId": "pilot00002",
+    "userId": "1",
+    "userName": "John",
+    "content": "John Smith from Acme mentioned they want to expand to 5 more locations next quarter. Should we start preliminary planning?",
+    "createdAt": "2025-11-20T09:45:00.000Z"
+  },
+  {
+    "id": "pc_011",
+    "pilotId": "pilot00002",
+    "userId": "3",
+    "userName": "Sarah Johnson",
+    "content": "Absolutely! I'll prepare a proposal with pricing and timeline estimates. This is exciting growth!",
+    "parentId": "pc_010",
+    "createdAt": "2025-11-20T10:30:00.000Z"
+  },
+  {
+    "id": "pc_012",
+    "pilotId": "pilot00002",
+    "userId": "1",
+    "userName": "John",
+    "content": "Quick heads up - Acme's IT team flagged a minor issue with API authentication. Already working on a fix, should be resolved today.",
+    "createdAt": "2025-12-10T08:20:00.000Z"
+  },
+  {
+    "id": "pc_013",
+    "pilotId": "pilot00002",
+    "userId": "3",
+    "userName": "Sarah Johnson",
+    "content": "Thanks for the quick turnaround on that API issue. Acme confirmed everything is working smoothly now.",
+    "parentId": "pc_012",
+    "createdAt": "2025-12-10T16:00:00.000Z"
+  },
+  {
+    "id": "pc_014",
+    "pilotId": "pilot00003",
+    "userId": "2",
+    "userName": "Graham Staniforth",
+    "content": "TechStart is ready to kick off! Emily Rodriguez seems very enthusiastic about the smart office features.",
+    "createdAt": "2025-12-02T10:00:00.000Z"
+  },
+  {
+    "id": "pc_015",
+    "pilotId": "pilot00003",
+    "userId": "4",
+    "userName": "Mike Chen",
+    "content": "I've been coordinating with their facilities team. They want to integrate with their existing access control system. Is that feasible?",
+    "createdAt": "2025-12-05T11:15:00.000Z"
+  },
+  {
+    "id": "pc_016",
+    "pilotId": "pilot00003",
+    "userId": "2",
+    "userName": "Graham Staniforth",
+    "content": "Yes, we can integrate with most standard access control systems. I'll need details on what system they're using.",
+    "parentId": "pc_015",
+    "createdAt": "2025-12-05T14:45:00.000Z"
+  },
+  {
+    "id": "pc_017",
+    "pilotId": "pilot00003",
+    "userId": "4",
+    "userName": "Mike Chen",
+    "content": "They're using Verkada for access control. I'll get you the API documentation.",
+    "parentId": "pc_015",
+    "createdAt": "2025-12-05T15:20:00.000Z"
+  },
+  {
+    "id": "pc_018",
+    "pilotId": "pilot00003",
+    "userId": "2",
+    "userName": "Graham Staniforth",
+    "content": "Perfect! Verkada integration is straightforward. Should have a timeline for them by end of week.",
+    "parentId": "pc_015",
+    "createdAt": "2025-12-06T09:00:00.000Z"
+  },
+  {
+    "id": "pc_019",
+    "pilotId": "pilot00003",
+    "userId": "4",
+    "userName": "Mike Chen",
+    "content": "Emily mentioned they might want to add 4 more cameras to cover the rooftop terrace area. Should we include this in the current scope?",
+    "createdAt": "2025-12-12T13:30:00.000Z"
+  },
+  {
+    "id": "pc_020",
+    "pilotId": "pilot00004",
+    "userId": "1",
+    "userName": "John",
+    "content": "Altitude Trampoline Park project is off to a great start! Safety monitoring is the top priority here.",
+    "createdAt": "2025-11-22T09:00:00.000Z"
+  },
+  {
+    "id": "pc_021",
+    "pilotId": "pilot00004",
+    "userId": "3",
+    "userName": "Sarah Johnson",
+    "content": "The 22 cameras are strategically placed to cover all trampoline zones. Sarah Johnson (owner) is very impressed with the coverage.",
+    "createdAt": "2025-11-25T10:45:00.000Z"
+  },
+  {
+    "id": "pc_022",
+    "pilotId": "pilot00004",
+    "userId": "1",
+    "userName": "John",
+    "content": "Great job on the camera placement! The incident detection AI is working perfectly. Already caught a few near-misses that staff could address immediately.",
+    "parentId": "pc_021",
+    "createdAt": "2025-11-25T14:20:00.000Z"
+  },
+  {
+    "id": "pc_023",
+    "pilotId": "pilot00004",
+    "userId": "3",
+    "userName": "Sarah Johnson",
+    "content": "Question: Can we add a feature to track peak usage times? The owner wants to optimize staffing based on customer flow.",
+    "createdAt": "2025-12-01T11:00:00.000Z"
+  },
+  {
+    "id": "pc_024",
+    "pilotId": "pilot00004",
+    "userId": "1",
+    "userName": "John",
+    "content": "Definitely doable! We can enable occupancy analytics and generate heat maps. I'll add this to the next sprint.",
+    "parentId": "pc_023",
+    "createdAt": "2025-12-01T15:30:00.000Z"
+  },
+  {
+    "id": "pc_025",
+    "pilotId": "pilot00004",
+    "userId": "3",
+    "userName": "Sarah Johnson",
+    "content": "The owner mentioned they're planning to open two more locations next year. They want to replicate this exact setup!",
+    "createdAt": "2025-12-15T09:15:00.000Z"
+  },
+  {
+    "id": "pc_026",
+    "pilotId": "pilot00004",
+    "userId": "1",
+    "userName": "John",
+    "content": "That's fantastic news! Let's document this deployment as a template for future locations. Great upsell opportunity!",
+    "parentId": "pc_025",
+    "createdAt": "2025-12-15T11:45:00.000Z"
+  }
+]

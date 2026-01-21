@@ -20,6 +20,13 @@ This platform provides a complete onboarding solution where:
 
 ### Dashboard Features
 - **Personalized Greeting**: Welcome message with user's name, profile avatar, and user type (Platform/Partner)
+- **Global Search Bar**: Microsoft Teams-style search with `Cmd/Ctrl + K` shortcut
+  - Instant search across all data types (300ms debounce)
+  - Search pilots, objectives, cameras, assets, users, and locations
+  - Grouped results by category with result counts
+  - Keyboard navigation (↑ ↓ to navigate, Enter to select, Esc to close)
+  - Direct navigation to relevant pages
+  - Rich result display with icons, metadata, and visual feedback
 - **Collapsible Sidebar**: Icon-only navigation with hover tooltips
   - Home, Pilots, Alerts, Users, Customers, Logout
   - (Assets and Settings temporarily hidden)
@@ -113,8 +120,20 @@ This platform provides a complete onboarding solution where:
   - **Activity Tab**: 
     - Chronological activity feed
     - User names displayed (not just emails)
-    - Activity types (objective created, asset uploaded, asset deleted, success criteria updated, ROI comments, checklist updates, etc.)
+    - Activity types (objective created, asset uploaded, asset deleted, success criteria updated, ROI comments, checklist updates, pilot comments, etc.)
     - Timestamp with relative time display
+  - **Comments Tab**: Team conversation and collaboration
+    - **Sticky comment input** at bottom for easy access
+    - Threaded conversations with reply functionality
+    - Real-time comment threads with user avatars (gradient-based)
+    - Relative timestamps (e.g., "2h ago", "Just now")
+    - Different avatar colors for main comments vs replies
+    - Inline reply with expand/collapse
+    - Enter key support (Cmd/Ctrl + Enter to send)
+    - Activity logging for all comments and replies
+    - Database persistence with localStorage (26 sample comments across all pilots)
+    - Comments grouped by conversation threads
+    - No results state with helpful messaging
 - **Pilot Creation**: Multi-step wizard with customer selection and configuration
 - **Pilot Deletion**: Cascade delete with confirmation (removes all related cameras, assets, objectives, remarks)
 - **Status Management**: Support for draft, active, in-progress, completed, on-hold, issues
@@ -207,7 +226,8 @@ src/
 │   │   └── PilotCard.tsx               # Pilot card with status, progress & delete
 │   ├── layout/
 │   │   ├── DashboardLayout.tsx         # Main dashboard wrapper
-│   │   ├── Header.tsx                  # Dashboard header with greeting
+│   │   ├── Header.tsx                  # Dashboard header with greeting & global search
+│   │   ├── GlobalSearch.tsx            # Microsoft Teams-style global search modal
 │   │   └── Sidebar.tsx                 # Collapsible navigation sidebar
 │   ├── preview/
 │   │   ├── BrowserFrame.tsx            # Browser chrome UI
@@ -242,16 +262,20 @@ src/
 ├── types/
 │   ├── auth.ts                         # Authentication types
 │   ├── pilot.ts                        # Pilot types with status helpers
+│   ├── pilotComment.ts                 # Pilot comment types with reply support
 │   ├── camera.ts                       # Camera & frame types
 │   ├── customer.ts                     # Customer types
 │   └── onboarding.ts                   # Onboarding config & pilot record types
 ├── utils/
 │   ├── auth.ts                         # Auth helpers & validation
-│   ├── db.ts                           # Pilot database CRUD operations
+│   ├── db.ts                           # Pilot database CRUD operations (with getAllPilots)
 │   ├── userDb.ts                       # User database CRUD operations
 │   ├── customerDb.ts                   # Customer database CRUD operations
-│   ├── cameraDb.ts                     # Camera database CRUD operations
-│   ├── assetDb.ts                      # Asset database CRUD operations
+│   ├── cameraDb.ts                     # Camera database CRUD operations (with getAllCameras)
+│   ├── assetDb.ts                      # Asset database CRUD operations (with getAllAssets)
+│   ├── objectiveDb.ts                  # Objective database CRUD operations (with getAllObjectives)
+│   ├── locationDb.ts                   # Location database CRUD operations (with getAllLocations)
+│   ├── pilotCommentDb.ts               # Pilot comment database with threading support
 │   └── linkGenerator.ts                # Clipboard helper utilities
 ├── index.css                           # Tailwind imports & custom styles
 └── App.tsx                             # Root component with providers
@@ -259,6 +283,7 @@ public/
 └── db/
     ├── background-presets.json         # 8 Unsplash background images
     ├── pilots.json                     # Pilot database (JSON storage)
+    ├── pilot_comments.json             # Pilot comments database (26 sample comments)
     ├── users.json                      # User database (JSON storage)
     └── customers.json                  # Customer database (JSON storage)
 ```
@@ -1721,6 +1746,23 @@ npm install -D msw
 - ✅ Responsive design (mobile-first)
 - ✅ Framer Motion animations with staggered section appearances
 - ✅ Real-time preview for link generator
+- ✅ **Global Search Bar** (Microsoft Teams-style)
+  - ✅ Cmd/Ctrl+K keyboard shortcut to open
+  - ✅ Searches across 6 entity types (Pilots, Objectives, Cameras, Assets, Users, Locations)
+  - ✅ Debounced search with 300ms delay
+  - ✅ Grouped results by type with result counts
+  - ✅ Keyboard navigation (↑↓ arrows, Enter to select, Escape to close)
+  - ✅ Smart navigation to relevant pages with query params
+  - ✅ Loading and empty states
+- ✅ **Pilot-Level Comments System**
+  - ✅ Threaded conversation system with reply functionality
+  - ✅ Sticky bottom input for chat-like UX
+  - ✅ Comment count badges on tab headers
+  - ✅ User avatars (gradient circles with initials)
+  - ✅ Timestamps with relative formatting
+  - ✅ Activity timeline integration
+  - ✅ Database persistence via localStorage
+  - ✅ 26 sample comments across different pilots
 - ✅ File upload with react-dropzone
 - ✅ Search functionality across all list views
 - ✅ Button alignment fixes (flex items-center for icons and text)

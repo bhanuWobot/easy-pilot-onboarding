@@ -91,6 +91,11 @@ export async function getObjectivesByPilot(pilotId: string): Promise<Objective[]
     .sort((a, b) => a.order - b.order);
 }
 
+export async function getAllObjectives(): Promise<Objective[]> {
+  const db = await getObjectivesDatabase();
+  return db.objectives;
+}
+
 export async function updateObjective(id: string, updates: Partial<Objective>, userId: string): Promise<Objective | null> {
   const db = await getObjectivesDatabase();
   const index = db.objectives.findIndex(o => o.id === id);

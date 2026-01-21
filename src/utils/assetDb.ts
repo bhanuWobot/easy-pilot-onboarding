@@ -88,6 +88,11 @@ export async function getAssetsByPilot(pilotId: string): Promise<Asset[]> {
   return db.assets.filter(a => a.pilotId === pilotId);
 }
 
+export async function getAllAssets(): Promise<Asset[]> {
+  const db = await getAssetsDatabase();
+  return db.assets;
+}
+
 export async function getAssetById(id: string): Promise<Asset | null> {
   const db = await getAssetsDatabase();
   return db.assets.find(a => a.id === id) || null;

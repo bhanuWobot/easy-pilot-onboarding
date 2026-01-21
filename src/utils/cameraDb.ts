@@ -69,6 +69,11 @@ export async function getCamerasByPilot(pilotId: string): Promise<Camera[]> {
   return db.cameras.filter(c => c.pilotId === pilotId);
 }
 
+export async function getAllCameras(): Promise<Camera[]> {
+  const db = await getCamerasDatabase();
+  return db.cameras;
+}
+
 export async function getCameraById(id: string): Promise<Camera | null> {
   const db = await getCamerasDatabase();
   return db.cameras.find(c => c.id === id) || null;

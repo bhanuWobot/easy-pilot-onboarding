@@ -28,6 +28,13 @@ import { getRemarksByPilot } from "../utils/remarkDb";
 import { getAllUsers } from "../utils/userDb";
 import { getCustomerByEmail } from "../utils/customerDb";
 import { getLocationsByIds } from "../utils/locationDb";
+import { 
+  getTopLevelComments, 
+  getRepliesForComment, 
+  addPilotComment,
+  initPilotCommentDatabase 
+} from "../utils/pilotCommentDb";
+import type { PilotComment } from "../types/pilotComment";
 import type { PilotRecord } from "../types/onboarding";
 import type { Objective, ObjectiveStatus, ObjectivePriority } from "../types/objective";
 import type { Camera } from "../types/camera";
@@ -95,7 +102,7 @@ function formatRelativeTime(dateString: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-type Tab = "overview" | "objectives" | "locations" | "assets" | "activity" | "cameras";
+type Tab = "overview" | "objectives" | "locations" | "assets" | "activity" | "comments";
 
 export function PilotDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -111,6 +118,12 @@ export function PilotDetailsPage() {
   const [locations, setLocations] = useState<Location[]>([]);
 
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  
+  // Comments state
+  const [comments, setComments] = useState<PilotComment[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   // Objective modal state
@@ -163,6 +176,10 @@ export function PilotDetailsPage() {
 
     try {
       setIsLoading(true);
+      
+      // Initialize pilot comment database
+      await initPilotCommentDatabase();
+      
       const [pilotData, objectivesData, camerasData, assetsData, remarksData, usersData] = await Promise.all([
         getPilotById(id),
         getObjectivesByPilot(id),
@@ -184,6 +201,10 @@ export function PilotDetailsPage() {
       setAssets(assetsData);
       setRemarks(remarksData);
       setUsers(usersData);
+
+      // Load comments
+      const commentsData = getTopLevelComments(id);
+      setComments(commentsData);
 
       // Load locations if available
       if (pilotData.locationIds && pilotData.locationIds.length > 0) {
@@ -529,6 +550,53 @@ export function PilotDetailsPage() {
     }
   };
 
+  // Comment handlers
+  const handleAddComment = async () => {
+    if (!pilot || !authState.user || !newComment.trim()) return;
+
+    try {
+      const comment = await addPilotComment({
+        pilotId: pilot.id,
+        userId: authState.user.id,
+        userName: authState.user.name,
+        content: newComment,
+      });
+
+      setComments([comment, ...comments]);
+      setNewComment("");
+      toast.success("Comment added");
+      await loadPilotData(); // Reload to get activity log
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      toast.error("Failed to add comment");
+    }
+  };
+
+  const handleAddReply = async (parentId: string) => {
+    if (!pilot || !authState.user || !replyContent.trim()) return;
+
+    try {
+      await addPilotComment({
+        pilotId: pilot.id,
+        userId: authState.user.id,
+        userName: authState.user.name,
+        content: replyContent,
+        parentId,
+      });
+
+      // Reload comments to get the new reply
+      const updatedComments = getTopLevelComments(pilot.id);
+      setComments(updatedComments);
+      setReplyContent("");
+      setReplyingTo(null);
+      toast.success("Reply added");
+      await loadPilotData(); // Reload to get activity log
+    } catch (error) {
+      console.error("Error adding reply:", error);
+      toast.error("Failed to add reply");
+    }
+  };
+
   const handleExportPDF = async () => {
     if (!pilot) return;
 
@@ -727,6 +795,21 @@ export function PilotDetailsPage() {
           {/* Action Buttons at Top */}
           <div className="mb-4 pb-4 border-b border-gray-200 flex justify-end gap-3">
             <button
+              onClick={() => window.open('https://dev.wobot.ai/home', '_blank')}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+              title="Open Wobot Dashboard"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
+              </svg>
+              Wobot Dashboard
+            </button>
+            <button
               onClick={handleExportPDF}
               className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
               title="Export pilot details as PDF"
@@ -855,7 +938,7 @@ export function PilotDetailsPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <div className="border-b border-gray-200">
             <nav className="flex gap-8 px-6">
-              {(["overview", "objectives", "locations", "assets", "activity"] as Tab[]).map((tab) => (
+              {(["overview", "objectives", "locations", "assets", "activity", "comments"] as Tab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -1153,7 +1236,7 @@ export function PilotDetailsPage() {
                           <h3 className="text-lg font-bold text-gray-900">Cameras ({cameras.length})</h3>
                         </div>
                         <button
-                          onClick={() => setActiveTab("cameras")}
+                          onClick={() => setActiveTab("locations")}
                           className="text-sm text-orange-600 hover:text-orange-700 font-medium"
                         >
                           View All →
@@ -1204,7 +1287,7 @@ export function PilotDetailsPage() {
                           </svg>
                           <p className="text-sm text-gray-500 italic">No cameras added yet</p>
                           <button
-                            onClick={() => setActiveTab("cameras")}
+                            onClick={() => setActiveTab("locations")}
                             className="mt-3 text-sm text-orange-600 hover:text-orange-700 font-medium"
                           >
                             Add Your First Camera
@@ -1801,6 +1884,220 @@ export function PilotDetailsPage() {
                       </div>
                     </div>
                   )}
+                </motion.div>
+              )}
+
+              {activeTab === "comments" && (
+                <motion.div
+                  key="comments"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-4"
+                >
+                  {/* Header with comment count */}
+                  <div className="flex items-center justify-between pb-4 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
+                      </svg>
+                      Conversations
+                      {comments.length > 0 && (
+                        <span className="ml-2 px-2.5 py-0.5 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
+                          {comments.length}
+                        </span>
+                      )}
+                    </h3>
+                  </div>
+
+                  {/* Comments List */}
+                  {comments.length === 0 ? (
+                    <div className="text-center py-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Comments Yet</h3>
+                      <p className="text-gray-500 mb-4">Be the first to start a conversation about this pilot</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {comments.map((comment) => {
+                        const replies = getRepliesForComment(comment.id);
+                        const isReplying = replyingTo === comment.id;
+
+                        return (
+                          <div key={comment.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                            {/* Main Comment */}
+                            <div className="p-6">
+                              <div className="flex items-start gap-4">
+                                {/* Avatar */}
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-white text-sm font-semibold">
+                                    {comment.userName.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <span className="font-semibold text-gray-900">{comment.userName}</span>
+                                    <span className="text-sm text-gray-500">{formatRelativeTime(comment.createdAt)}</span>
+                                    {comment.updatedAt && (
+                                      <span className="text-xs text-gray-400 italic">(edited)</span>
+                                    )}
+                                  </div>
+                                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+
+                                  {/* Reply Button */}
+                                  <button
+                                    onClick={() => setReplyingTo(isReplying ? null : comment.id)}
+                                    className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+                                      />
+                                    </svg>
+                                    {isReplying ? "Cancel" : "Reply"}
+                                  </button>
+
+                                  {/* Reply Input */}
+                                  {isReplying && (
+                                    <motion.div
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: "auto" }}
+                                      exit={{ opacity: 0, height: 0 }}
+                                      className="mt-4 space-y-3"
+                                    >
+                                      <textarea
+                                        value={replyContent}
+                                        onChange={(e) => setReplyContent(e.target.value)}
+                                        placeholder="Write your reply..."
+                                        rows={3}
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                                            handleAddReply(comment.id);
+                                          }
+                                        }}
+                                      />
+                                      <div className="flex justify-end gap-2">
+                                        <button
+                                          onClick={() => {
+                                            setReplyingTo(null);
+                                            setReplyContent("");
+                                          }}
+                                          className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button
+                                          onClick={() => handleAddReply(comment.id)}
+                                          disabled={!replyContent.trim()}
+                                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+                                        >
+                                          Reply
+                                        </button>
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Replies */}
+                              {replies.length > 0 && (
+                                <div className="mt-6 ml-14 space-y-4 pl-6 border-l-2 border-gray-200">
+                                  {replies.map((reply) => (
+                                    <div key={reply.id} className="flex items-start gap-3">
+                                      {/* Reply Avatar */}
+                                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center flex-shrink-0">
+                                        <span className="text-white text-xs font-semibold">
+                                          {reply.userName.charAt(0).toUpperCase()}
+                                        </span>
+                                      </div>
+
+                                      {/* Reply Content */}
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-3 mb-1">
+                                          <span className="font-semibold text-gray-900 text-sm">{reply.userName}</span>
+                                          <span className="text-xs text-gray-500">{formatRelativeTime(reply.createdAt)}</span>
+                                          {reply.updatedAt && (
+                                            <span className="text-xs text-gray-400 italic">(edited)</span>
+                                          )}
+                                        </div>
+                                        <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{reply.content}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Sticky Add Comment Section at Bottom */}
+                  <div className="sticky bottom-0 bg-white pt-4 mt-6 border-t-2 border-gray-200">
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-4">
+                      <div className="flex items-start gap-3">
+                        {/* User Avatar */}
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-sm font-semibold">
+                            {authState.user?.name.charAt(0).toUpperCase() || "U"}
+                          </span>
+                        </div>
+
+                        {/* Input Area */}
+                        <div className="flex-1">
+                          <textarea
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            placeholder="Share updates, ask questions, or provide feedback..."
+                            rows={2}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                                handleAddComment();
+                              }
+                            }}
+                          />
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-xs text-gray-500">
+                              💡 {navigator.platform.includes("Mac") ? "Cmd" : "Ctrl"} + Enter to send
+                            </span>
+                            <button
+                              onClick={handleAddComment}
+                              disabled={!newComment.trim()}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                              </svg>
+                              Post
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
