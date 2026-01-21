@@ -794,7 +794,7 @@ export function PilotDetailsPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           {/* Action Buttons at Top */}
           <div className="mb-4 pb-4 border-b border-gray-200 flex justify-end gap-3">
-            <button
+            {/* <button
               onClick={() => window.open('https://dev.wobot.ai/home', '_blank')}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
               title="Open Wobot Dashboard"
@@ -808,7 +808,7 @@ export function PilotDetailsPage() {
                 />
               </svg>
               Wobot Dashboard
-            </button>
+            </button> */}
             <button
               onClick={handleExportPDF}
               className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
